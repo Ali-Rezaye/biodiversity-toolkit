@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checklist Cleaner — correct names across many checklists at once</title>
+<style>
+:root{--paper:#f4f1ea;--ink:#23211c;--ink-soft:#5b5852;--rule:#d6cfbe;--rule2:#e6e0d1;
+ --ui:#12556e;--ui-hi:#17698a;--ui-face:#e9e3d5;
+ --serif:Georgia,'Iowan Old Style',serif;--mono:'SFMono-Regular',Consolas,monospace}
+*{box-sizing:border-box}
+html{overflow-anchor:none}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:34px 24px 90px}
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:20px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+ color:var(--ink-soft);margin:0 0 10px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(26px,4.2vw,40px);line-height:1.06;
+ margin:0 0 10px;letter-spacing:-.01em}
+h1 em{color:#3f6b4a;font-style:italic}
+.lede{font-size:16.5px;color:var(--ink-soft);max-width:70ch;margin:0}
+.startbar{background:#eef4f7;border:1px solid #c5d8e2;border-left:4px solid var(--ui);
+ border-radius:6px;padding:12px 15px;margin:0 0 20px;font-size:13.5px;line-height:1.65}
+.startbar b{color:var(--ui)}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:7px;overflow:hidden;
+ background:var(--ui-face);box-shadow:inset 0 1px 2px #0000000d}
+.seg button{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+ background:transparent;color:#615b4d;border:0;padding:7px 12px;cursor:pointer;transition:background .12s}
+.seg button+button{border-left:1px solid #00000012}
+.seg button:hover:not(:disabled){background:#ffffff9c;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ui);color:#fff;font-weight:600}
+.seg button:disabled{opacity:.34;cursor:not-allowed}
+.seg button:focus-visible{outline:2px solid var(--ui-hi);outline-offset:2px;z-index:1}
+.btn{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+ background:var(--ui);color:#fff;border:0;padding:9px 14px;cursor:pointer;border-radius:7px;
+ box-shadow:0 1px 0 #00000026,inset 0 1px 0 #ffffff2e}
+.btn:hover{background:var(--ui-hi)}
+.btn:disabled,.btn:disabled:hover{opacity:.38;cursor:not-allowed;background:transparent}
+.btn.ghost{background:transparent;color:var(--ui);border:1.5px solid var(--ui);box-shadow:none}
+.btn.ghost:hover{background:#12556e14}
+.btn:focus-visible{outline:2px solid var(--ui-hi);outline-offset:2px}
+h2{font-family:var(--serif);font-size:22px;margin:34px 0 6px;font-weight:600}
+h2:first-of-type{margin-top:26px}
+.sect{font-size:14px;color:var(--ink-soft);max-width:78ch;margin:0 0 14px}
+.note{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);margin:6px 0 12px;line-height:1.65}
+.warn{background:#fcf1dc;border-left:3px solid #d08a2c;padding:9px 12px;font-size:13px;
+ color:#7a4f10;margin:0 0 14px;max-width:80ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin:8px 0 16px}
+th,td{border:1px solid var(--rule);padding:6px 10px;text-align:right;white-space:nowrap}
+th{background:#efeade;font-weight:600}
+td.name,th.name{text-align:left;font-family:var(--serif);font-size:13px}
+td.diag{background:#f2eee3;color:var(--ink-soft)}
+td.grp{background:#e8e2d4;text-align:left;font-family:var(--mono);font-size:10px;
+ letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);
+ padding-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.area{width:104px;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--rule);border-radius:4px}
+.del{border:0;background:none;color:#a3341f;cursor:pointer;font-size:14px}
+td.mv{white-space:nowrap;padding:3px 6px}
+th.lab{white-space:normal;max-width:150px;overflow-wrap:anywhere;line-height:1.35}
+.labedit{cursor:text;border-bottom:1px dashed var(--rule);padding:0 2px;outline:none}
+.labedit:hover,.labedit:focus{border-bottom-color:var(--ui);background:#fff}
+#areaNote{margin-top:6px}
+.mvb{border:1px solid var(--rule);background:#fff;color:var(--ui);cursor:pointer;font-size:10px;line-height:1;
+  padding:5px 7px;border-radius:4px;margin:0 1px}
+.mvb:hover:not(:disabled){background:#12556e14}
+.mvb:disabled{opacity:.3;cursor:default}
+.mvb:focus-visible{outline:2px solid var(--ui-hi);outline-offset:1px}
+.s0{background:#ffffcc;color:#23211c}.s1{background:#a1dab4;color:#23211c}.s2{background:#41b6c4;color:#23211c}
+.s3{background:#225ea8;color:#ffffff}.s4{background:#0c2c84;color:#ffffff}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:-8px 0 18px;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft)}
+.legend .lg{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.legend i{display:inline-block;width:16px;height:12px;border:1px solid #c9c1ae}
+.legend .lgnote{flex-basis:100%}
+svg.tree line{stroke:#23211c;stroke-width:1.4}
+svg.tree text{font-family:Consolas,"SFMono-Regular",monospace;font-size:12px;fill:#23211c}
+svg.tree text.tk{font-size:10px;fill:#5b5852}
+h2 .h2sub{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink-soft)}
+h1.statement{font-size:clamp(22px,3vw,30px);line-height:1.22}
+.authors{margin-top:12px;padding-top:10px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);line-height:1.75}
+.authors a{color:var(--ui)}
+.method{font-family:var(--mono);font-size:11px;color:var(--ink);margin:4px 0 2px}
+.linkhelp{margin:-2px 0 8px}
+.treebar{margin:4px 0 6px}
+.hl{background:#fff;border:1px solid var(--rule);border-left:4px solid var(--ui);border-radius:6px;padding:10px 14px;margin:2px 0 18px;font-size:13.5px;line-height:1.75}
+.hl b{font-family:var(--mono);font-size:12px}
+.hl .warnline{color:#7a4f10}
+.dl{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:9px 12px;margin:4px 0 16px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.dl>b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.dlnote,.dlwhy{font-family:var(--mono);font-size:10px;color:var(--ink-soft)}
+.dlg{display:inline-flex;align-items:center;gap:4px;margin-right:4px}
+.dl>.dlnote{margin:0 8px 0 2px}
+.dl>div.dlnote{flex-basis:100%}
+.printonly{display:none}
+@media print{
+ @page{size:landscape;margin:11mm}
+ body{background:#fff}
+ .wrap{max-width:none;padding:0}
+ .startbar,.bar,.warn,#areaNote,#empty,#downloads,#names,#matrix,.treebar,.noprint,
+ button,input[type=file],.mv,.act,.labedit:empty{display:none!important}
+ .printonly{display:block;font-family:var(--mono);font-size:9pt;color:#5b5852;margin:0 0 6px}
+ .area{border:0;background:transparent;padding:0;width:auto;font:inherit}
+ .area::placeholder{color:transparent}
+ .scroll{overflow:visible!important}
+ table{font-size:8pt}
+ th,td{padding:3px 5px}
+ th.lab{max-width:76px}
+ td.name{white-space:normal;max-width:190px;overflow-wrap:anywhere}
+ .mx{break-before:page}
+ .legend{margin-top:4px}
+ h2{break-after:avoid}
+ #tree,.hl,.legend{break-inside:avoid}
+ a{color:inherit;text-decoration:none}
+}
+.tietoggle{color:var(--ui);text-decoration:underline dotted;cursor:pointer}
+.tielist{font-family:var(--mono);font-size:11px;color:var(--ink-soft);background:#f6f3ec;border-radius:4px;padding:6px 9px;margin:4px 0}
+trtr.t0 td{background:#fcf1dc}
+tr.t1 td{background:#eef4e9}
+tr.xl td.name:first-child{border-left:3px solid var(--ui)}
+.mtx td.one{background:#2f6b52;color:#fff}
+.mtx td.zero{color:#c9c2b2}
+footer{margin-top:44px;border-top:2px solid var(--ink);padding-top:16px;
+ font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);line-height:1.75}
+
+.chk{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--ink);margin-right:10px;cursor:pointer}
+table.mini{font-size:12px;margin:8px 0 14px}
+table.mini td,table.mini th{text-align:left}
+#tableBox,#fileList,#results .scroll{overflow-x:auto}
+.tbsum{font-family:var(--mono);font-size:12px;margin:8px 0}
+.tbprob{background:#fbe9e5;border:1px solid #d9a99c;border-left:4px solid #a3341f;border-radius:6px;padding:9px 12px;margin:8px 0;font-size:13px}
+.tbwarn{color:#7a4f10}
+tr.refused td{background:#fbe9e5}
+h2 .step{color:var(--ui)}
+.dl{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:9px 12px;margin:14px 0 16px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.dl>b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.dlnote{font-family:var(--mono);font-size:10px;color:var(--ink-soft)}
+.btn:disabled,.btn:disabled:hover{opacity:.38;cursor:not-allowed}
+.authors{margin-top:12px;padding-top:10px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);line-height:1.75}
+.authors a{color:var(--ui)}
+h1.statement{font-size:clamp(22px,3vw,30px);line-height:1.22}
+@media print{ button,input,.chk,.startbar,#downloads{display:none!important} .scroll,#tableBox,#fileList{overflow:visible!important} table{font-size:8pt} }
+</style></head>
+<body><div class="wrap">
+<header>
+ <p class="eyebrow">Checklist cleaner &middot; any taxonomic group &middot; runs offline</p>
+ <h1 class="statement">Correct names across many checklists at once &mdash; one table, applied to every file, every change reported.</h1>
+ <p class="lede">Load a table of corrections &mdash; a name as it appears in your files, and its replacement &mdash; and the
+  checklists to correct. The cleaner applies the table to every name column of every file, keeps genus and species
+  consistent, merges rows that become the same taxon, and returns the corrected files with a full record of what
+  changed. Headed with two rank names, the same kind of table adds a rank column instead, such as subfamily from genus.
+  It works for any group of organisms.</p>
+</header>
+<div class="startbar">
+ <b>Start here:</b> 1. Load a correction table: a CSV whose first column holds names as they appear in your files and
+ whose second column holds the replacement. Leave the second cell empty to delete every row carrying that name.
+ 2. Add the checklists to correct &mdash; select several files at once to load them together. 3. Press <b>Run</b>,
+ read the summary and the list of changes, then download the cleaned files. Your original files are never changed.
+ Nothing is uploaded; the file runs entirely in your browser.
+ <button class="btn ghost mini" id="exBtn">Try the example</button>
+</div>
+<div class="warn" style="margin-bottom:14px">The cleaner applies your table exactly; it does not judge whether a correction is
+ right. Check names first with <a href="https://tnrs.biendata.org/" target="_blank" rel="noopener">TNRS</a> or
+ <a href="https://www.checklistbank.org/" target="_blank" rel="noopener">ChecklistBank</a> before building the table.</div>
+<h2><span class="step">1</span> &middot; Correction table</h2>
+<div class="bar"><button class="btn" id="tblBtn">Load correction table (CSV)&hellip;</button><input type="file" id="tblFile" accept=".csv,.tsv,.txt" hidden>
+ <label class="chk"><input type="checkbox" id="tblData"> First row is data, not a header</label></div>
+<div id="tableBox"></div>
+<h2><span class="step">2</span> &middot; Checklists</h2>
+<div class="bar"><button class="btn" id="addBtn">Add checklists&hellip;</button><input type="file" id="addFile" accept=".csv,.tsv,.txt" multiple hidden>
+ <button class="btn ghost" id="clearBtn">Clear</button></div>
+<div id="fileList"></div>
+<h2><span class="step">3</span> &middot; Run</h2>
+<div class="bar"><span class="lbl">Mode</span>
+ <label class="chk"><input type="radio" name="mode" value="rename" checked> Rename (and delete)</label>
+ <label class="chk"><input type="radio" name="mode" value="addrank"> Add a rank column</label>
+ <label class="chk"><input type="checkbox" id="stdHead" checked> Standardise headers</label>
+ <button class="btn" id="run" disabled>Run</button> <span class="note" id="runWhy"></span></div>
+<div id="downloads"></div>
+<div id="results"></div>
+<footer>
+ Names are read with the same rules as the Phylogenetic Checklist Viewer and the Checklist Comparison: authorship is
+ ignored when matching, so a table row without authors matches a cell with them, and the reverse. The cleaner writes
+ UTF-8, comma-separated, one file per checklist; your originals are untouched. <span id="ver"></span>
+ <div class="authors" id="authorline"></div>
+</footer>
+</div>
+<script>
+const VERSION='v1.1';
+const AUTHORS=[{name:'Ali Rezaye',aff:'Somaliland Biodiversity Foundation',orcid:'0009-0003-3560-4672'},
+ {name:'Mary E. Barkworth',aff:'Somaliland Biodiversity Foundation; Utah State University',orcid:'0000-0001-9785-1538'}];
+const TOOL_NAME='Checklist Cleaner';
+const AI_LINE='Developed with assistance from Claude (Anthropic).';
+/* In a figure the author line is too long for one row: one row per author, then the AI line. */
+function authorLinesFig(){ return [`Software: ${AUTHORS[0].name} (${AUTHORS[0].aff}, ORCID ${AUTHORS[0].orcid}) \u00b7`,
+  `${AUTHORS[1].name} (${AUTHORS[1].aff}, ORCID ${AUTHORS[1].orcid}) \u00b7 ${TOOL_NAME} ${VERSION}`, AI_LINE]; }
+function authorLineHTML(){ return 'Software: '+AUTHORS.map(a=>`${esc(a.name)} (${esc(a.aff)}, ORCID <a href="https://orcid.org/${a.orcid}" target="_blank" rel="noopener">${a.orcid}</a>)`).join(' &middot; ')+
+  ` &middot; ${TOOL_NAME} ${VERSION}<br>${AI_LINE}`; }
+/* Any organism group: tautonyms are valid under the ICZN. Set before the parser runs. */
+window.NAME_POLICY_HOST={countTautonyms:true};
+/* ================================================================== *
+ *  parseName — the one name parser used by both tools.
+ *
+ *  Written to plant_name_parsing_specification.md (ICN articles cited
+ *  there) and tested against name_parsing_test_corpus.csv. This block is
+ *  injected byte-identical into the Viewer and the Comparer; the build
+ *  refuses to ship if the two copies differ.
+ *
+ *  Result fields:
+ *    kind        'species' | 'infraspecific' | 'genus' | 'family' |
+ *                'formula' | 'placeholder' | 'damaged' | 'none'
+ *    genus       capitalised, folded; null if none
+ *    epithet     lower-case, folded; null unless a species epithet exists
+ *    binomial    'genus epithet' lower-case, folded, no hybrid sign —
+ *                the counting key; null unless species-level
+ *    family      the family name if the string IS one
+ *    rank        deepest rank determined
+ *    isHybrid    a named nothotaxon (not a formula)
+ *    isFormula   a hybrid formula (Art. H.2) — never a species
+ *    isOpen      sp./spp./cf./aff./indet./?/sp. nov./sp. A
+ *    qualifier   the open-nomenclature token found, or null
+ *    infra       [{rank, epithet}] in order
+ *    authorship  trailing citation text, verbatim
+ *    damaged     contains U+FFFD (encoding wreckage)
+ *    counts      strict-default verdict, with the policy switches below
+ *
+ *  Policy switches — spec §9. Every (B) item was ruled on by M. Barkworth,
+ *  23 Sep 2026; the settings below are her decisions. 'grex' is not an ICN
+ *  rank (it is ICNCP/zoological) and was removed from the rank list on the
+ *  same ruling: Diospyros grex F.White is an accepted species.
+ *
+ *  A host page may override any switch by setting window.NAME_POLICY_HOST
+ *  before calling parseName; the merge happens at call time, so this block
+ *  stays byte-identical in every tool. The Viewer (plants, ICN) sets nothing.
+ *  The Comparer sets {countTautonyms:true}: tautonyms are valid under the
+ *  ICZN (Bison bison) and illegitimate only under the ICN (Art. 23.4).
+ * ================================================================== */
+const NAME_POLICY = {
+  countHybrids: true,          // named nothotaxa count as species
+  countCfAff: false,           // B1 ruled: not a species — note it
+  countAggregates: true,       // B2 ruled: count as the species — note it
+  countCultivars: true,        // B3 ruled: count as the species — note it
+  countTautonyms: false,       // B4 ruled: not a species; surface as unplaced so the name is corrected
+  countBareRank: true          // B5 ruled: count; ignore the dangling rank term
+};
+
+const NAME_FAMILY_ALT = new Set(['compositae','cruciferae','gramineae','guttiferae','labiatae',
+  'leguminosae','palmae','umbelliferae','papilionaceae']);            /* ICN Art. 18.5–18.6 */
+const NAME_RANKS = /^(subsp|ssp|var|subvar|f|fo|forma|form|subf|nothosubsp|nothossp|nothovar|nothof|nvar|cv|convar|prol|proles|agg|sect|ser|nothosect|nothoser|subgen|subg|race|lus|lusus)\.?$/i;
+const NAME_OPEN  = /^(sp|spp|spec|indet|indent|cf|aff|nov|ined|nr|gen|species|incertae|sedis|\?)\.?$/i;
+const NAME_PLACEHOLDER = /^\s*(none|not|no|unidentified|unknown|indet|indeterminate|n\/a|na|null|nil|unnamed|undetermined|unplaced|incertaesedis|-+|\.+)(\s|$|\.)/i;
+/* tokens that can sit in the epithet position without being epithets (gnparser exceptions) */
+const NAME_IMPOSTOR = /^(ex|gr|dos|de|la|von|van|der|den|del|du|le|et|in|non|sensu|auct|unr|sect|ser|subgen|subg)\.?$/;
+
+function nameFold(s){
+  /* Art. 60.7 transcription as gnparser applies it: umlauts and Nordic vowels
+     become digraphs, ligatures separate, every other diacritic is dropped. */
+  s = s.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue')
+       .replace(/å/g,'ao').replace(/Å/g,'Ao').replace(/ø/g,'oe').replace(/Ø/g,'Oe')
+       .replace(/æ/g,'ae').replace(/Æ/g,'Ae').replace(/œ/g,'oe').replace(/Œ/g,'Oe').replace(/ß/g,'ss');
+  return s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function parseName(raw){
+  const POL = Object.assign({}, NAME_POLICY, (typeof window!=='undefined' && window.NAME_POLICY_HOST) || {});
+  const out = {verbatim:raw==null?'':String(raw), kind:'none', genus:null, epithet:null, binomial:null, family:null,
+    rank:null, isHybrid:false, isFormula:false, isOpen:false, qualifier:null, infra:[], authorship:'', damaged:false, counts:false, note:null,
+    tautonym:false, aggregate:false, cultivar:false, bareRank:false};
+  let s = out.verbatim;
+
+  /* --- settle bytes before grammar (spec §1) --- */
+  if(/\uFFFD/.test(s)){ out.damaged=true; }
+  if(/†/.test(s)) out.note='extinct';
+  s = s.replace(/[\u00a0\u2000-\u200b\u3000]/g,' ')        /* exotic spaces */
+       .replace(/_/g,' ')                                     /* underscores for spaces (A4) */
+       .replace(/[\u2010-\u2015]/g,'-')                       /* dashes to hyphen */
+       .replace(/†/g,' ')                                     /* extinction dagger (B6) */
+       .replace(/\(/g,' (').replace(/\)/g,') ')               /* authorship parentheses as boundaries (A6) */
+       .replace(/\s+/g,' ').trim();
+  if(!s) return out;
+
+  /* --- placeholders (spec §4): not a name --- */
+  if(NAME_PLACEHOLDER.test(s)){ out.kind='placeholder'; return out; }
+  if(/\b(viroid|virus|phage|satellite)\b/i.test(s)){ out.kind='none'; out.note='not a plant name'; return out; }
+
+  s = nameFold(s);
+  let toks = s.split(' ').filter(Boolean);
+
+  /* --- hybrid marker before the genus: nothogenus (Art. H.6) --- */
+  if(/^[×xX]$/.test(toks[0]) && toks.length>1 && /^[A-Z]/.test(toks[1])){ out.isHybrid=true; toks.shift(); }
+  else if(/^[×xX][A-Z]/.test(toks[0]||'')){ out.isHybrid=true; toks[0]=toks[0].slice(1); }
+
+  /* --- a family name in the genus position (Art. 18) --- */
+  const t0 = toks[0]||'';
+  if(/^[A-Z][a-z-]+aceae$/.test(t0) || NAME_FAMILY_ALT.has(t0.toLowerCase())){
+    out.kind='family'; out.family=t0; out.rank='family'; return out;
+  }
+  /* --- names above genus rank by their ending, never genera ---
+     -idae: family under the ICZN (Lycosidae), subclass under the ICN (Rosidae). No genus
+            in the 17,275-genus map ends -idae, so this applies everywhere.
+     -inae: subfamily (ICZN) / subtribe (ICN). -oidea: superfamily (ICZN).
+            Real genera DO end this way (Tarennoidea, Vulpinae and five others), so these
+            two endings apply only to a word standing alone: a binomial such as
+            Tarennoidea wallichii is always read as a species. */
+  if(/^[A-Z][a-z]+idae$/.test(t0)){
+    out.kind='family'; out.family=t0; out.rank='family'; return out;
+  }
+  if(toks.length===1 && /^[A-Z][a-z]+(inae|oidea)$/.test(t0)){
+    out.kind='family'; out.family=t0; out.rank=/oidea$/.test(t0)?'superfamily':'subfamily'; return out;
+  }
+
+  /* --- genus (Art. 20): capitalised, may be hyphenated (Drake-brockmania, Saxo-Fridericia) --- */
+  if(!/^[A-Z][a-z]+(-[A-Za-z][a-z]*)*$/.test(t0)) return out;      /* abbreviated (M.), lower-case, noise */
+  out.genus = t0.charAt(0).toUpperCase()+t0.slice(1).replace(/-([A-Z])/g,(m,c)=>'-'+c.toLowerCase());
+  let i=1;
+
+  /* --- zoological subgenus in parentheses: tolerated and skipped --- */
+  if(/^\([A-Z][a-z]+\)$/.test(toks[i]||'')) i+=1;
+  else if(toks[i]==='(' && /^[A-Z][a-z]+$/.test(toks[i+1]||'') && toks[i+2]===')') i+=3;
+
+  /* --- hybrid marker before the epithet: nothospecies --- */
+  if(/^[×xX]$/.test(toks[i]||'') && /^[a-z]/.test(toks[i+1]||'')){ out.isHybrid=true; i++; }
+  else if(/^×[a-z]/.test(toks[i]||'')){ out.isHybrid=true; toks[i]=toks[i].slice(1); }
+
+  const cand = toks[i]||'';
+  if(!cand){ out.kind='genus'; out.rank='genus'; return out; }
+  if(/^[×xX]$/.test(cand)){ out.kind='formula'; out.isFormula=true; out.rank='hybrid_formula'; return out; }
+
+  /* --- open nomenclature in the epithet position: genus-level determination --- */
+  const nextCap = /^[A-Z(]/.test(toks[i+1]||'');
+  const abbrevAsEpithet = !/\.$/.test(cand) && nextCap && /^(spec|ser|sect|var|f|fo)$/.test(cand);
+  if(NAME_IMPOSTOR.test(cand) && !abbrevAsEpithet){ out.kind='genus'; out.rank='genus'; out.authorship=toks.slice(i).join(' '); return out; }
+  if(NAME_OPEN.test(cand) && !abbrevAsEpithet){
+    out.isOpen=true; out.qualifier=cand.replace(/\.$/,'').toLowerCase();
+    if(out.qualifier==='cf'||out.qualifier==='aff'){
+      const ep=toks[i+1]||'';
+      if(/^[a-z][a-z'.-]+$/.test(ep) && !NAME_RANKS.test(ep)){
+        out.epithet=ep; out.kind='species'; out.rank='species';
+        out.binomial=(out.genus+' '+ep).toLowerCase();
+        out.counts=POL.countCfAff; out.authorship=toks.slice(i+2).join(' ');
+        return out;
+      }
+    }
+    out.kind='genus'; out.rank='approximate'; return out;
+  }
+  /* an epithet: lower-case, may hold ' . - internally (A5); a capital here is authorship on a uninomial */
+  if(!/^[a-z][a-z'.\uFFFD-]*[a-z.\uFFFD]$/.test(cand) || cand.length<2){
+    out.kind='genus'; out.rank='genus'; out.authorship=toks.slice(i).join(' '); return out;
+  }
+  if(NAME_RANKS.test(cand) && !abbrevAsEpithet){ out.kind='genus'; out.rank='genus'; return out; }   /* 'Poa subsp.' fragment */
+  out.epithet=cand.toLowerCase(); i++;
+
+  const tautonym = out.epithet===out.genus.toLowerCase();
+
+  /* A formula marker anywhere after the epithet makes the whole string a formula
+     (Art. H.2.1) — including after a first parent's authorship: 'Salix aurita L. × S. caprea L.' */
+  for(let k=i;k<toks.length;k++){
+    const t=toks[k], nxt=toks[k+1]||'';
+    if(/^[×]$/.test(t) || (/^[xX]$/.test(t) && (nxt===''||/^[A-Z?]/.test(nxt)||/^[a-z]/.test(nxt))) || /^×[A-Za-z?]/.test(t)){
+      out.kind='formula'; out.isFormula=true; out.rank='hybrid_formula'; out.binomial=null; out.counts=false; return out;
+    }
+  }
+  if(toks.slice(i).some(t=>t==='?')){ out.isOpen=true; out.qualifier='?'; }
+  if(/\bp\.\s?p\.$/i.test(toks.slice(i).join(' '))){ out.isOpen=true; out.qualifier='p.p.'; }
+
+  /* --- after the epithet: ranks, qualifiers and authorship interleave (spec §2), so the
+         whole tail is scanned; nothing stops at the first author token. Rank terms are
+         lower-case: 'F.' after an author is an initial, 'f.' after an epithet is forma. --- */
+  let hasInfra=false, bareRank=false, aggregate=false, cultivar=false; const auth=[];
+  for(; i<toks.length; i++){
+    const t=toks[i], tl=t.toLowerCase();
+    if(t===tl && NAME_RANKS.test(t)){
+      const rk=tl.replace(/\.$/,'');
+      if(rk==='agg'){ aggregate=true; out.rank='aggregate'; continue; }
+      if(rk==='cv'||rk==='convar'){ cultivar=true; out.rank='cultivar'; continue; }
+      let ep=toks[i+1]||'';
+      if(/^[α-ω]\.?$/.test(ep)){ i++; ep=toks[i+1]||''; }                 /* Greek-letter rank marker (pre-1900) */
+      /* 'f.' after authorship is filius, not forma: only a lower-case epithet makes it a rank */
+      if(/^[a-z][a-z'.-]+$/.test(ep) && !NAME_RANKS.test(ep) && !NAME_OPEN.test(ep) && !NAME_IMPOSTOR.test(ep)){
+        out.infra.push({rank:rk, epithet:ep}); hasInfra=true; i++;
+        out.rank = ({subsp:'subspecies',ssp:'subspecies',nothosubsp:'subspecies',nothossp:'subspecies',
+                     var:'variety',nvar:'variety',nothovar:'variety',subvar:'subvariety',
+                     f:'form',fo:'form',forma:'form',form:'form',nothof:'form',subf:'subform',
+                     prol:'proles',proles:'proles'})[rk] || 'infraspecific';
+        continue;
+      }
+      if(/^(ssp|subsp|var|subvar|fo|subf)$/.test(rk)) bareRank=true;               /* B5 */
+      if(rk==='f' && auth.length===0) bareRank=true;                                  /* 'f.' right after the epithet with no epithet following */
+      continue;
+    }
+    if(tl==='species'||tl==='complex'||tl==='group'){ aggregate=true; out.rank='aggregate'; continue; }
+    if(/^spp\.?$/.test(tl)){ bareRank=true; continue; }                                  /* B5 misuse */
+    if(/^unr\.?$/.test(tl) && /^[A-Z]/.test(toks[i+1]||'')){ out.kind='genus'; out.rank='infrageneric'; out.epithet=null; out.binomial=null; out.counts=false; return out; }
+    if(NAME_OPEN.test(t) && /^(cf|aff)/.test(tl)){ out.isOpen=true; out.qualifier=tl.replace(/\.$/,''); continue; }
+    if(t==='?'){ out.isOpen=true; out.qualifier='?'; continue; }
+    auth.push(t);
+  }
+  out.authorship=auth.join(' ');
+  if(/-group$/.test(out.epithet)){ aggregate=true; out.rank='aggregate'; out.epithet=out.epithet.replace(/-group$/,''); }
+
+  out.epithet=out.epithet.replace(/['.]/g,'');
+  out.binomial=(out.genus+' '+out.epithet).toLowerCase();
+  out.kind = hasInfra ? 'infraspecific' : 'species';
+  if(!out.rank) out.rank='species';
+
+  /* --- counting, spec §9 --- */
+  let counts=true;
+  if(out.damaged && /\uFFFD/.test(out.genus+' '+out.epithet)) counts=false;
+  if(out.isOpen && /^(cf|aff|\?|p\.p\.)$/.test(out.qualifier)) counts=POL.countCfAff;
+  if(out.isHybrid && !POL.countHybrids) counts=false;
+  if(aggregate) counts=POL.countAggregates;
+  if(cultivar)  counts=POL.countCultivars;
+  if(tautonym)  counts=POL.countTautonyms;
+  if(bareRank)  counts=POL.countBareRank;
+  out.counts=counts;
+  out.tautonym=tautonym; out.aggregate=aggregate; out.cultivar=cultivar; out.bareRank=bareRank;
+  return out;
+}
+/* ====================== end shared parser ====================== */
+/* ---------------- Checklist Cleaner: the tool's own code ---------------- */
+const el=s=>document.querySelector(s);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+const HEADS={
+ phylum:['phylum','division'], subphylum:['subphylum'], class:['class'], order:['order'], suborder:['suborder'],
+ superfamily:['superfamily'], family:['family'], subfamily:['subfamily','subfam'], tribe:['tribe'], genus:['genus'],
+ species:['species','speciesbinomial','species_binomial','species binomial','scientificname','scientific_name','scientific name','speciesname','species_name',
+          'species name','taxon','taxonname','taxon name','binomial','binomen','fullname','full name',
+          'acceptedname','accepted name','acceptedscientificname','accepted_scientific_name',
+          'accepted scientific name','name','latinname','sciname']
+};
+const RANKS=['phylum','subphylum','class','order','suborder','superfamily','family','subfamily','tribe','genus','species'];
+const HEAD2RANK=new Map(); Object.entries(HEADS).forEach(([r,hs])=>hs.forEach(h=>HEAD2RANK.set(h,r)));
+const STD_NAME={scientificname:'scientificName',speciesbinomial:'speciesBinomial',acceptedscientificname:'acceptedScientificName'};
+function norm(s){
+ s=(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+ return s.replace(/[\u00d7\u00a0]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+}
+const clean=s=>String(s==null?'':s).replace(/\s+/g,' ').trim();
+
+/* ---- Reading. One delimiter per file, from its header line: tab, else comma, else semicolon.
+   The whole text is parsed at once, so a quoted cell may contain the delimiter or a line break
+   and still come back whole: a cleaner that rewrites files must never cut a cell in two. ---- */
+function sniffDelim(line){ return line.includes('\t')?'\t':line.includes(',')?',':line.includes(';')?';':','; }
+function parseCSV(text,d){
+ const rows=[]; let row=[],cur='',q=false,i=0; const n=text.length;
+ while(i<n){ const ch=text[i];
+  if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i+=2; continue; } q=false; i++; continue; } cur+=ch; i++; continue; }
+  if(ch==='"'&&cur===''){ q=true; i++; continue; }
+  if(ch===d){ row.push(cur); cur=''; i++; continue; }
+  if(ch==='\r'||ch==='\n'){ if(ch==='\r'&&text[i+1]==='\n') i++; row.push(cur); rows.push(row); row=[]; cur=''; i++; continue; }
+  cur+=ch; i++;
+ }
+ if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+ return rows.filter(r=>!(r.length===1&&r[0]===''));
+}
+function decode(buf){
+ const b=new Uint8Array(buf), bom=b.length>=3&&b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF;
+ try{ return {text:new TextDecoder('utf-8',{fatal:true}).decode(buf),enc:'UTF-8',bom}; }
+ catch(e){ return {text:new TextDecoder('windows-1252').decode(buf),enc:'Windows-1252',bom:false}; }
+}
+const isNum=v=>/^-?(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(v.trim());
+
+/* ---- The key of a cell: what two spellings of one name have in common. Authorship is never
+   part of it, so "Acrididae Burmeister, 1838" and "Acrididae" match. ---- */
+const KEYS=new Map();
+function keyOf(cell){
+ const t=String(cell==null?'':cell).trim(); if(!t) return '';
+ if(KEYS.has(t)) return KEYS.get(t);
+ const p=parseName(t); let k;
+ if((p.kind==='species'||p.kind==='infraspecific')&&p.binomial) k=p.binomial+(p.infra&&p.infra.length?' '+p.infra.map(x=>x.epithet).join(' '):'');
+ else if(p.kind==='family'&&p.family) k=norm(p.family);
+ else if(p.genus) k=norm(p.genus);
+ else k=norm(t);
+ KEYS.set(t,k); return k;
+}
+const speciesLevel=cell=>{ const t=String(cell||'').trim(); if(!t) return null; const p=parseName(t); return (p.kind==='species'||p.kind==='infraspecific')&&p.binomial?p:null; };
+/* Replace only the genus word of a species-level cell; epithet, infra parts and authorship stay. */
+function swapGenus(cell,newGenus){ const m=cell.match(/^(\s*(?:\u00d7\s*|[xX]\s+)?)([^\s(]+)([\s\S]*)$/); return m?m[1]+newGenus+m[3]:cell; }
+const genusOfNew=s=>{ const p=parseName(s); return p.genus||s.split(/\s+/)[0]; };
+
+/* ---------------- state ---------------- */
+let TABLE=null;          // {text, header:[h1,h2], rows, mode, autoMode, entries, problems, warnings, extraCols}
+const FILES=[];          // {name, header, rows, enc, bom, delim, notes, refused}
+let RESULT=null;         // {perFile:[...], changes:[...], unused:[...], placements:[...], appliedRows:[...]}
+
+/* ---------------- the correction table ---------------- */
+function readTable(text){
+ text=dropHashLines(text).text;
+ const firstLine=text.split(/\r?\n/)[0]||'';
+ const R=parseCSV(text,sniffDelim(firstLine));
+ const asData=el('#tblData').checked;
+ const header=asData?['old','new']:(R[0]||[]).slice(0,2).map(clean);
+ const body=asData?R:R.slice(1), off=asData?1:2;
+ const extraCols=R.some(r=>r.length>2);
+ const rows=[]; let skipped=0;
+ body.forEach((r,i)=>{ const old=clean(r[0]); if(!old){ skipped++; return; } rows.push({n:i+off,old,nw:clean(r[1])}); });
+ const h=header.map(x=>x.toLowerCase());
+ const autoMode=(h.length===2&&RANKS.includes(h[0])&&RANKS.includes(h[1])&&h[0]!==h[1])?'addrank':'rename';
+ TABLE={text,header,rows,extraCols,skipped,autoMode,mode:autoMode};
+ document.querySelectorAll('input[name=mode]').forEach(r=>r.checked=(r.value===TABLE.mode));
+ validateTable(); renderTable(); refreshRun();
+}
+function validateTable(){
+ const T=TABLE, problems=[], warnings=[], byKey=new Map();
+ if(T.extraCols) warnings.push('Only the first two columns are used; the others are ignored.');
+ if(T.skipped) warnings.push(`${T.skipped} row${T.skipped===1?'':'s'} with an empty first cell skipped.`);
+ if(T.mode==='addrank'){
+  const h=T.header.map(x=>x.toLowerCase());
+  if(!(RANKS.includes(h[0])&&RANKS.includes(h[1])&&h[0]!==h[1])) problems.push(`Add-rank mode needs two different rank names as headers (for example genus,subfamily); this table is headed “${T.header.join(', ')}”.`);
+  T.rows.forEach(r=>{
+   if(!r.nw){ warnings.push(`row ${r.n}: “${r.old}” has no value to add — skipped.`); return; }
+   const k=keyOf(r.old);
+   if(byKey.has(k)){ const p=byKey.get(k); if(keyOf(p.nw)!==keyOf(r.nw)) problems.push(`conflicting rows ${p.n} and ${r.n}: “${p.old}” → “${p.nw}” and “${r.old}” → “${r.nw}”.`); else warnings.push(`row ${r.n} repeats row ${p.n} — used once.`); return; }
+   byKey.set(k,Object.assign({},r,{key:k,final:r.nw,chain:null,used:false}));
+  });
+ } else {
+  T.rows.forEach(r=>{
+   if(r.old===r.nw){ warnings.push(`row ${r.n}: “${r.old}” is the same as its replacement — ignored.`); return; }
+   const k=keyOf(r.old);
+   if(byKey.has(k)){ const p=byKey.get(k); if(p.nw!==r.nw) problems.push(`conflicting rows ${p.n} and ${r.n}: “${p.old}” → “${p.nw||'(delete)'}” and “${r.old}” → “${r.nw||'(delete)'}”.`); else warnings.push(`row ${r.n} repeats row ${p.n} — used once.`); return; }
+   byKey.set(k,Object.assign({},r,{key:k,kind:parseName(r.old).kind,used:false}));
+  });
+  /* Chains are followed to the end before use: A→B and B→C apply as A→C. A row whose new name
+     has the same key as its old one (it only rewrites the spelling or authorship) ends a chain. */
+  const cycles=new Set();
+  byKey.forEach(e=>{
+   let cur=e, path=[e], hops=0;
+   while(cur.nw!==''){
+    const nk=keyOf(cur.nw); if(nk===cur.key) break;
+    const nx=byKey.get(nk); if(!nx) break;
+    if(path.includes(nx)){ const cyc=path.slice(path.indexOf(nx)); const id=cyc.map(x=>x.n).sort((a,b)=>a-b).join(',');
+      if(!cycles.has(id)){ cycles.add(id); problems.push(`cycle in rows ${cyc.map(x=>x.n).join(', ')}: ${cyc.map(x=>x.old).concat([nx.old]).join(' → ')}.`); } break; }
+    path.push(nx); cur=nx; if(++hops>10){ problems.push(`chain from row ${e.n} is longer than 10 steps.`); break; }
+   }
+   e.final=cur.nw; e.chain=path.length>1?path.map(x=>x.old).concat([cur.nw||'(delete)']).join(' \u2192 '):null;
+  });
+ }
+ T.entries=byKey; T.problems=problems; T.warnings=warnings;
+}
+function renderTable(){
+ const T=TABLE, box=el('#tableBox'); if(!T){ box.innerHTML=''; return; }
+ const E=[...T.entries.values()], dels=E.filter(e=>T.mode==='rename'&&e.final==='').length;
+ const chains=E.filter(e=>e.chain);
+ let h=`<div class="tbsum"><b>${T.mode==='rename'?'Rename':'Add a rank column'}</b> mode${T.mode!==T.autoMode?' (chosen by you)':' (chosen from the headers)'} \u00b7 `+
+  `headers “${esc(T.header.join('”, “'))}” \u00b7 <b>${E.length}</b> usable row${E.length===1?'':'s'}`+(T.mode==='rename'?` \u00b7 <b>${dels}</b> deletion${dels===1?'':'s'}`:'')+`</div>`;
+ if(T.problems.length) h+='<div class="tbprob"><b>The table cannot be used until these are fixed:</b><br>'+T.problems.map(esc).join('<br>')+'</div>';
+ if(chains.length) h+='<div class="note"><b>Chains, applied end to end:</b> '+chains.map(e=>esc(e.chain)).join(' \u00b7 ')+'</div>';
+ if(T.warnings.length) h+='<div class="note tbwarn">'+T.warnings.map(esc).join('<br>')+'</div>';
+ h+='<table class="mini"><tr><th>row</th><th>'+esc(T.header[0]||'old')+'</th><th>'+esc(T.header[1]||'new')+'</th><th>as understood</th></tr>'+
+  E.slice(0,5).map(e=>`<tr><td>${e.n}</td><td>${esc(e.old)}</td><td>${esc(e.nw)||'<i>(empty)</i>'}</td><td>${
+   T.mode==='addrank'?`${esc(T.header[1])} = ${esc(e.nw)} wherever ${esc(T.header[0])} is ${esc(e.old)}`:
+   e.final===''?'delete every row carrying this name':`rename to ${esc(e.final)}${e.chain?' (chain)':''}`}</td></tr>`).join('')+'</table>';
+ box.innerHTML=h;
+}
+
+/* ---------------- checklists ---------------- */
+/* A report exported by the Viewer or the Comparer starts with title and credit lines marked "#"
+   (or "\"#" when quoted); they come before the header row and are skipped. */
+function dropHashLines(text){ const L=text.split(/\r?\n/); let n=0; while(n<L.length&&/^\s*"?#/.test(L[n])) n++; return {text:L.slice(n).join('\n'),n}; }
+function readChecklist(name,buf){
+ const dec=decode(buf), enc=dec.enc, bom=dec.bom, dh=dropHashLines(dec.text.replace(/^\ufeff/,'')), text=dh.text;
+ const firstLine=text.replace(/^\ufeff/,'').split(/\r?\n/)[0]||'', delim=sniffDelim(firstLine);
+ const R=parseCSV(text.replace(/^\ufeff/,''),delim);
+ const F={name,enc,bom,delim,notes:[],refused:null};
+ if(!R.length){ F.refused='the file is empty.'; return F; }
+ const header=R[0].map(h=>h.trim()), width=Math.max(...R.map(r=>r.length));
+ for(let c=header.length;c<width;c++) header.push('');
+ header.forEach((h,c)=>{ if(!h){ header[c]='column_'+(c+1); F.notes.push(`empty header in column ${c+1} named column_${c+1}`); } });
+ const seen=new Map();
+ for(let c=0;c<header.length;c++){ const k=header[c].toLowerCase(); if(seen.has(k)){ F.refused=`two columns are both headed “${header[c]}” (columns ${seen.get(k)+1} and ${c+1}). The cleaner cannot tell which one to correct; delete or rename one and load the file again.`; break; } seen.set(k,c); }
+ F.header=header; F.rows=R.slice(1).map(r=>{ const x=r.slice(); while(x.length<header.length) x.push(''); return x; });
+ if(enc==='Windows-1252') F.notes.push('read as Windows-1252 (not valid UTF-8); written back as UTF-8');
+ if(bom) F.notes.push('UTF-8 byte-order mark removed');
+ if(delim!==',') F.notes.push(`read as ${delim==='\t'?'tab':'semicolon'}-separated; written comma-separated`);
+ if(dh.n) F.notes.push(`${dh.n} line${dh.n===1?'':'s'} beginning “#” before the header skipped (title and credits of an exported report)`);
+ return F;
+}
+function columnsOf(F){
+ const hl=F.header.map(h=>h.trim().toLowerCase());
+ const numeric=hl.map((_,c)=>{ let any=false; for(const r of F.rows){ const v=r[c].trim(); if(!v) continue; any=true; if(!isNum(v)) return false; } return any; });
+ const nameCols=[], countCols=[];
+ hl.forEach((h,c)=>{ if(HEAD2RANK.has(h)&&!numeric[c]) nameCols.push(c); else if(numeric[c]) countCols.push(c); });
+ const rankOf=c=>HEAD2RANK.get(hl[c]);
+ const spec=nameCols.filter(c=>rankOf(c)==='species');
+ let primary=spec.length?spec[0]:-1;
+ if(primary<0) for(const r of ['genus','tribe','subfamily','family','superfamily','suborder','order','class','subphylum','phylum']){ const c=nameCols.find(x=>rankOf(x)===r); if(c!==undefined){ primary=c; break; } }
+ return {hl,nameCols,countCols,rankOf,primary,genusCol:nameCols.find(c=>rankOf(c)==='genus')??-1,
+  rankCol:hl.findIndex(h=>h==='rank'||h==='taxonrank'), nasCol:hl.indexOf('names_as_submitted'),
+  placeCols:nameCols.filter(c=>c!==primary&&['family','order'].includes(rankOf(c)))};
+}
+function renderFiles(){
+ const box=el('#fileList'); if(!FILES.length){ box.innerHTML='<div class="note">No checklists loaded yet.</div>'; return; }
+ box.innerHTML='<table class="mini"><tr><th>file</th><th>rows</th><th>columns</th><th>name columns found</th><th>notes</th></tr>'+FILES.map(F=>{
+  if(F.refused) return `<tr class="refused"><td>${esc(F.name)}</td><td colspan="4"><b>Refused:</b> ${esc(F.refused)}</td></tr>`;
+  const C=columnsOf(F); return `<tr><td>${esc(F.name)}</td><td>${F.rows.length.toLocaleString()}</td><td>${F.header.length}</td><td>${C.nameCols.map(c=>esc(F.header[c])).join(', ')||'<i>none</i>'}</td><td>${esc(F.notes.join('; '))}</td></tr>`; }).join('')+'</table>';
+}
+
+/* ---------------- running ---------------- */
+function stdHeader(h){ const l=h.trim().toLowerCase(); if(RANKS.includes(l)) return l; if(STD_NAME[l]) return STD_NAME[l]; return h; }
+function runAll(){
+ const T=TABLE, std=el('#stdHead').checked, changes=[], perFile=[], placements=[];
+ T.entries.forEach(e=>e.used=false);
+ FILES.filter(F=>!F.refused).forEach(F=>{
+  const S={file:F.name,rowsIn:F.rows.length,renamed:0,cascaded:0,deleted:0,mergedAway:0,rowsOut:0,filled:0,unmatched:0,conflicts:0,notes:F.notes.slice()};
+  const rec=(row,col,old,nw,action)=>changes.push({file:F.name,row,column:col,old,new:nw,action});
+  let out;
+  if(T.mode==='addrank') out=addRankFile(F,T,S,rec); else out=renameFile(F,T,S,rec,placements);
+  let header=out.header.slice();
+  if(std){ const before=header.slice(); header=header.map(stdHeader); const ch=header.map((h,i)=>h!==before[i]?`${before[i]} → ${h}`:null).filter(Boolean); if(ch.length) S.notes.push('headers standardised: '+ch.join(', ')); }
+  S.rowsOut=out.rows.length; perFile.push(S);
+  F.out={header,rows:out.rows};
+ });
+ const unused=[...T.entries.values()].filter(e=>!e.used).map(e=>({row:e.n,old:e.old,new:e.nw}));
+ RESULT={perFile,changes,unused,placements,mode:T.mode};
+ renderResults();
+}
+function renameFile(F,T,S,rec,placements){
+ const C=columnsOf(F), E=T.entries, hdr=F.header;
+ const genusRen=new Map(), del=new Set(), delGen=new Set();
+ E.forEach(e=>{ if(e.final==='') { del.add(e.key); if(e.kind==='genus') delGen.add(e.key); } else if(e.kind==='genus') genusRen.set(e.key,e); });
+ const kept=[];
+ F.rows.forEach((orig,i)=>{
+  const rowNo=i+2, row=orig.slice();
+  /* deletions, judged on the cells as they came in */
+  let hit=null;
+  for(const c of C.nameCols){ const k=keyOf(row[c]); if(k&&del.has(k)){ hit=[c,E.get(k)]; break; }
+   const sp=speciesLevel(row[c]); if(sp&&delGen.has(norm(sp.genus))){ hit=[c,E.get(norm(sp.genus))]; break; } }
+  if(hit){ hit[1].used=true; S.deleted++; rec(rowNo,hdr[hit[0]],row[hit[0]],'',`deleted (${hit[1].old})`); return; }
+  /* rule 1: every name cell whose key is in the table takes the table's new name as written */
+  const changed=new Set(); const speciesRen=[];
+  for(const c of C.nameCols){ const k=keyOf(row[c]); const e=k&&E.get(k); if(!e) continue; e.used=true;
+   if(row[c]!==e.final){ rec(rowNo,hdr[c],row[c],e.final,e.chain?'renamed (chain)':'renamed'); S.renamed++; row[c]=e.final; changed.add(c); }
+   if(e.kind==='species'||e.kind==='infraspecific') speciesRen.push(e); }
+  /* cascade: a species rename sets the genus column to the new genus */
+  if(C.genusCol>=0) speciesRen.forEach(e=>{ const g=genusOfNew(e.final);
+   if(g&&norm(g)!==keyOf(row[C.genusCol])){ rec(rowNo,hdr[C.genusCol],row[C.genusCol],g,'cascade'); S.cascaded++; row[C.genusCol]=g; changed.add(C.genusCol); } });
+  /* cascade: a genus rename rewrites the genus word of species-level cells not already renamed */
+  for(const c of C.nameCols){ if(changed.has(c)) continue; const sp=speciesLevel(row[c]); if(!sp) continue;
+   const e=genusRen.get(norm(sp.genus)); if(!e) continue; e.used=true; const nv=swapGenus(row[c],genusOfNew(e.final));
+   if(nv!==row[c]){ rec(rowNo,hdr[c],row[c],nv,'cascade'); S.cascaded++; row[c]=nv; } }
+  kept.push({row,orig,rowNo});
+ });
+ /* merge: rows with every name column key-equal (and the same rank) become one */
+ const sig=r=>C.nameCols.map(c=>keyOf(r[c])).join('\u0001')+'\u0002'+(C.rankCol>=0?clean(r[C.rankCol]).toLowerCase():'');
+ const groups=new Map(), order=[];
+ kept.forEach(k=>{ const named=C.nameCols.some(c=>String(k.row[c]).trim()); const s=named?sig(k.row):'\u0000'+k.rowNo;
+  if(!groups.has(s)){ groups.set(s,[]); order.push(s); } groups.get(s).push(k); });
+ const rows=[];
+ order.forEach(s=>{ const g=groups.get(s), first=g[0];
+  if(g.length>1){
+   const wasDup=g.every(k=>sig(k.orig)===sig(g[0].orig));
+   const action=wasDup?'duplicate in original':'merged';
+   const res=first.row.slice();
+   for(let c=0;c<res.length;c++){ if(C.nameCols.includes(c)) continue;
+    const vals=g.map(k=>k.row[c]);
+    if(C.countCols.includes(c)){ const nums=vals.filter(v=>v.trim()).map(v=>parseFloat(v.replace(/,/g,'')));
+      if(nums.length){ const dec=Math.max(0,...vals.map(v=>(v.split('.')[1]||'').length)); res[c]=(nums.reduce((a,b)=>a+b,0)).toFixed(dec); } continue; }
+    if(c===C.nasCol){ const u=[]; vals.forEach(v=>v.split(' | ').map(x=>x.trim()).filter(Boolean).forEach(x=>{ if(!u.includes(x)) u.push(x); })); res[c]=u.join(' | '); continue; }
+    if(vals.every(v=>v===vals[0])) continue;
+    const u=[]; vals.map(v=>v.trim()).filter(Boolean).forEach(x=>{ if(!u.includes(x)) u.push(x); }); res[c]=u.join(' | ');
+    rec(first.rowNo,hdr[c],vals.join(' / '),res[c],'values joined on merge');
+   }
+   g.slice(1).forEach(k=>{ rec(k.rowNo,'','',`merged into row ${first.rowNo}`,action); S.mergedAway++; });
+   rows.push(res);
+  } else rows.push(first.row);
+ });
+ /* same name, different placement: listed for the user, never merged */
+ if(C.primary>=0&&C.placeCols.length){
+  const byName=new Map();
+  rows.forEach((r,ix)=>{ const k=keyOf(r[C.primary]); if(!k) return; (byName.get(k)||byName.set(k,[]).get(k)).push(r); });
+  byName.forEach((rs,k)=>{ const pl=new Map(); rs.forEach(r=>{ const p=C.placeCols.map(c=>`${hdr[c]}: ${r[c]||'—'}`).join(', '); pl.set(p,(pl.get(p)||0)+1); });
+   if(pl.size>1){ placements.push({file:F.name,name:rs[0][C.primary],placements:[...pl.keys()]});
+    rec('',hdr[C.primary],rs[0][C.primary],[...pl.keys()].join(' | '),'same name, different placement — not merged'); } });
+ }
+ return {header:hdr.slice(),rows};
+}
+function addRankFile(F,T,S,rec){
+ const C=columnsOf(F), h1=T.header[0].toLowerCase(), h2=T.header[1].toLowerCase();
+ let keyCol=C.nameCols.find(c=>C.rankOf(c)===h1), derived=false;
+ if(keyCol===undefined){ if(h1==='genus'&&C.primary>=0&&C.rankOf(C.primary)==='species'){ keyCol=C.primary; derived=true; S.notes.push(`genus derived from ${F.header[C.primary]}`); }
+  else { S.notes.push(`no ${h1} column — nothing added`); return {header:F.header.slice(),rows:F.rows.map(r=>r.slice())}; } }
+ const header=F.header.slice(); let rows=F.rows.map(r=>r.slice());
+ let tgt=C.nameCols.find(c=>C.rankOf(c)===h2); if(tgt===undefined) tgt=header.findIndex(h=>h.trim().toLowerCase()===h2);
+ if(tgt<0){ tgt=keyCol+1; header.splice(tgt,0,T.header[1]); rows.forEach(r=>r.splice(tgt,0,'')); S.notes.push(`column “${T.header[1]}” inserted after ${header[keyCol]}`); }
+ const unmatched=new Map();
+ rows.forEach((r,i)=>{ const cell=r[keyCol]; let k;
+  if(derived){ const t=String(cell).trim(); if(!t) return; const p=parseName(t); if(!p.genus) return; k=norm(p.genus); }
+  else { k=keyOf(cell); if(!k) return; }
+  const e=T.entries.get(k);
+  if(!e){ const disp=derived?parseName(String(cell).trim()).genus:String(cell).trim(); const u=unmatched.get(k)||{name:disp,n:0}; u.n++; unmatched.set(k,u); return; }
+  e.used=true;
+  if(!String(r[tgt]).trim()){ rec(i+2,header[tgt],'',e.nw,'filled'); r[tgt]=e.nw; S.filled++; }
+  else if(keyOf(r[tgt])!==keyOf(e.nw)){ rec(i+2,header[tgt],r[tgt],e.nw,'conflict — existing value kept'); S.conflicts++; }
+ });
+ S.unmatched=unmatched.size; S.unmatchedList=[...unmatched.values()];
+ return {header,rows};
+}
+
+/* ---------------- results ---------------- */
+const q=v=>{ const s=String(v==null?'':v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+const toCSV=(header,rows)=>[header,...rows].map(r=>r.map(q).join(',')).join('\n')+'\n';
+function summaryCSV(){ return toCSV(['file','rows_in','cells_renamed','cascaded','rows_deleted','rows_merged_away','rows_out','filled','unmatched_keys','conflicts','notes'],
+ RESULT.perFile.map(S=>[S.file,S.rowsIn,S.renamed,S.cascaded,S.deleted,S.mergedAway,S.rowsOut,S.filled,S.unmatched,S.conflicts,S.notes.join('; ')])); }
+const changesCSV=()=>toCSV(['file','row','column','old','new','action'],RESULT.changes.map(c=>[c.file,c.row,c.column,c.old,c.new,c.action]));
+const unusedCSV=()=>toCSV(['table_row','old','new'],RESULT.unused.map(u=>[u.row,u.old,u.new]));
+function appliedCSV(){ const E=[...TABLE.entries.values()];
+ return TABLE.mode==='addrank'? toCSV([TABLE.header[0],TABLE.header[1],'table_row'],E.map(e=>[e.old,e.nw,e.n]))
+  : toCSV(['old','new_as_applied','action','chain','table_row'],E.map(e=>[e.old,e.final,e.final===''?'delete':'rename',e.chain||'',e.n])); }
+const outName=n=>n.replace(/\.(csv|tsv|txt)$/i,'')+'.csv';
+function renderResults(){
+ const R=RESULT, ar=R.mode==='addrank';
+ let h='<h2>Summary</h2><div class="scroll"><table><tr><th class="name">file</th><th>rows in</th>'+(ar?'<th>filled</th><th>unmatched keys</th><th>conflicts</th>':'<th>cells renamed</th><th>cascaded</th><th>rows deleted</th><th>rows merged away</th>')+'<th>rows out</th><th class="name">notes</th></tr>'+
+  R.perFile.map(S=>`<tr><td class="name">${esc(S.file)}</td><td>${S.rowsIn.toLocaleString()}</td>`+(ar?`<td>${S.filled}</td><td>${S.unmatched}</td><td>${S.conflicts}</td>`:`<td>${S.renamed}</td><td>${S.cascaded}</td><td>${S.deleted}</td><td>${S.mergedAway}</td>`)+
+   `<td>${S.rowsOut.toLocaleString()}</td><td class="name">${esc(S.notes.join('; '))}</td></tr>`).join('')+'</table></div>';
+ const refused=FILES.filter(F=>F.refused); if(refused.length) h+='<div class="tbprob">'+refused.map(F=>`<b>${esc(F.name)}</b> was not processed: ${esc(F.refused)}`).join('<br>')+'</div>';
+ if(ar) R.perFile.forEach(S=>{ if(S.unmatchedList&&S.unmatchedList.length) h+=`<div class="note"><b>${esc(S.file)} \u2014 ${S.unmatchedList.length} key${S.unmatchedList.length===1?'':'s'} not in the table</b> (rows): ${S.unmatchedList.map(u=>`${esc(u.name)} (${u.n})`).join(', ')}</div>`; });
+ if(R.placements.length) h+='<h2>Same name, different placement \u2014 not merged</h2><div class="scroll"><table><tr><th class="name">file</th><th class="name">name</th><th class="name">placements</th></tr>'+
+  R.placements.map(p=>`<tr><td class="name">${esc(p.file)}</td><td class="name"><i>${esc(p.name)}</i></td><td class="name">${p.placements.map(esc).join('<br>')}</td></tr>`).join('')+'</table></div>';
+ const shown=R.changes.slice(0,500);
+ h+=`<h2>Changes</h2>`+(R.changes.length>500?`<div class="note">Showing 500 of ${R.changes.length.toLocaleString()} \u2014 full list in CHANGES.csv.</div>`:'')+
+  (R.changes.length?'<div class="scroll"><table><tr><th class="name">file</th><th>row</th><th class="name">column</th><th class="name">old</th><th class="name">new</th><th class="name">action</th></tr>'+
+  shown.map(c=>`<tr><td class="name">${esc(c.file)}</td><td>${c.row}</td><td class="name">${esc(c.column)}</td><td class="name">${esc(c.old)}</td><td class="name">${esc(c.new)}</td><td class="name">${esc(c.action)}</td></tr>`).join('')+'</table></div>':'<div class="note">No changes.</div>');
+ h+='<h2>Unused table rows</h2>'+(R.unused.length?'<div class="note">These rows matched nothing in any file \u2014 often a misspelling in the table.</div><div class="scroll"><table><tr><th>table row</th><th class="name">old</th><th class="name">new</th></tr>'+
+  R.unused.map(u=>`<tr><td>${u.row}</td><td class="name">${esc(u.old)}</td><td class="name">${esc(u.new)}</td></tr>`).join('')+'</table></div>':'<div class="note">Every table row was used.</div>');
+ el('#results').innerHTML=h; renderDownloads();
+}
+function renderDownloads(){
+ const ok=!!RESULT;
+ el('#downloads').innerHTML='<div class="dl"><b>Downloads</b> '+[['dlZip','Cleaned files (ZIP)'],['dlChg','Changes (CSV)'],['dlSum','Summary (CSV)'],['dlUnu','Unused table rows (CSV)']]
+  .map(([id,t])=>`<button class="btn ghost" id="${id}" ${ok?'':'disabled'}>${t}</button>`).join('')+
+  '<button class="btn" id="dlPdf">Whole page (PDF)</button><span class="dlnote">Choose \u2018Save as PDF\u2019 in the print dialog.</span></div>';
+ if(ok){ el('#dlZip').onclick=()=>saveBlob('cleaned_checklists.zip',buildZip());
+  el('#dlChg').onclick=()=>saveText('CHANGES.csv',changesCSV()); el('#dlSum').onclick=()=>saveText('SUMMARY.csv',summaryCSV());
+  el('#dlUnu').onclick=()=>saveText('UNUSED_TABLE_ROWS.csv',unusedCSV()); }
+ el('#dlPdf').onclick=()=>window.print();
+}
+function saveBlob(name,blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); }
+const saveText=(name,text)=>saveBlob(name,new Blob([text],{type:'text/csv;charset=utf-8'}));
+
+/* ---------------- ZIP, written by hand: stored entries, CRC-32, UTF-8 names (bit 11) ---------------- */
+const CRC=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function zipFiles(entries){
+ const enc=new TextEncoder(), d=new Date();
+ const time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1), date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+ const parts=[], central=[]; let off=0;
+ entries.forEach(({name,text})=>{ const nb=enc.encode(name), data=enc.encode(text), crc=crc32(data);
+  const L=new DataView(new ArrayBuffer(30));
+  [[0,0x04034b50,4],[4,20,2],[6,0x0800,2],[8,0,2],[10,time,2],[12,date,2],[14,crc,4],[18,data.length,4],[22,data.length,4],[26,nb.length,2],[28,0,2]]
+   .forEach(([o,v,n])=>n===4?L.setUint32(o,v,true):L.setUint16(o,v,true));
+  parts.push(new Uint8Array(L.buffer),nb,data);
+  const Cd=new DataView(new ArrayBuffer(46));
+  [[0,0x02014b50,4],[4,20,2],[6,20,2],[8,0x0800,2],[10,0,2],[12,time,2],[14,date,2],[16,crc,4],[20,data.length,4],[24,data.length,4],[28,nb.length,2],[30,0,2],[32,0,2],[34,0,2],[36,0,2],[38,0,4],[42,off,4]]
+   .forEach(([o,v,n])=>n===4?Cd.setUint32(o,v,true):Cd.setUint16(o,v,true));
+  central.push(new Uint8Array(Cd.buffer),nb); off+=30+nb.length+data.length; });
+ const cdSize=central.reduce((s,p)=>s+p.length,0), E=new DataView(new ArrayBuffer(22));
+ [[0,0x06054b50,4],[4,0,2],[6,0,2],[8,entries.length,2],[10,entries.length,2],[12,cdSize,4],[16,off,4],[20,0,2]]
+  .forEach(([o,v,n])=>n===4?E.setUint32(o,v,true):E.setUint16(o,v,true));
+ return new Blob([...parts,...central,new Uint8Array(E.buffer)],{type:'application/zip'});
+}
+function zipEntries(){ return [...FILES.filter(F=>F.out).map(F=>({name:'cleaned/'+outName(F.name),text:toCSV(F.out.header,F.out.rows)})),
+ {name:'CHANGES.csv',text:changesCSV()},{name:'SUMMARY.csv',text:summaryCSV()},{name:'UNUSED_TABLE_ROWS.csv',text:unusedCSV()},{name:'TABLE_as_applied.csv',text:appliedCSV()}]; }
+const buildZip=()=>zipFiles(zipEntries());
+
+/* ---------------- wiring ---------------- */
+function refreshRun(){ const ok=TABLE&&!TABLE.problems.length&&FILES.some(F=>!F.refused); el('#run').disabled=!ok;
+ el('#runWhy').textContent=!TABLE?'Load a correction table first.':TABLE.problems.length?'Fix the table problems above first.':!FILES.some(F=>!F.refused)?'Add at least one checklist.':''; }
+function readFiles(list,cb){ const files=[...list]; const slot=new Array(files.length); let pending=files.length; if(!pending) return;
+ files.forEach((f,k)=>{ const rd=new FileReader(); rd.onload=()=>{ slot[k]={name:f.name,buf:rd.result}; if(--pending===0) cb(slot); };
+  rd.onerror=()=>{ alert('Could not read '+f.name); if(--pending===0) cb(slot); }; rd.readAsArrayBuffer(f); }); }
+el('#tblBtn').onclick=()=>el('#tblFile').click();
+el('#tblFile').onchange=ev=>readFiles(ev.target.files,s=>{ const d=decode(s[0].buf); TABLE=null; readTable(d.text.replace(/^\ufeff/,'')); ev.target.value=''; });
+el('#tblData').onchange=()=>{ if(TABLE) readTable(TABLE.text); };
+document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{ if(!TABLE) return; TABLE.mode=r.value; validateTable(); renderTable(); refreshRun(); });
+el('#addBtn').onclick=()=>el('#addFile').click();
+el('#addFile').onchange=ev=>readFiles(ev.target.files,s=>{ s.forEach(x=>{ if(x) FILES.push(readChecklist(x.name,x.buf)); }); ev.target.value=''; renderFiles(); refreshRun(); });
+el('#clearBtn').onclick=()=>{ FILES.length=0; RESULT=null; el('#results').innerHTML=''; renderFiles(); renderDownloads(); refreshRun(); };
+el('#run').onclick=runAll;
+const EX_TABLE='old,new\nAus albida,Aus alba\nBus nigra,Bus atra\nBus atra,Bus fusca\n"Cus Smith, 1900",Dus\nEpsilidae,\nZus viridis,Zus virens\n';
+const EX_A='order,family,scientificName,rank,GBIF_record_count,names_as_submitted\nColeoptera,Alphidae,Aus alba,species,3,Aus alba L.\nColeoptera,Alphidae,Aus albida,species,4,Aus albida Sm.\nColeoptera,Betidae,Bus nigra,species,2,Bus nigra\nColeoptera,Cetidae,Cus,genus,1,"Cus Smith, 1900"\nColeoptera,Cetidae,Cus rubra,species,5,Cus rubra Sm. | Cus rubella\nColeoptera,Epsilidae,,family,2,Epsilidae\nColeoptera,Epsilidae,Eus minor,species,1,Eus minor\n';
+const EX_B='order,family,scientificName,rank,GBIF_record_count,names_as_submitted\nColeoptera,Alphidae,Aus alba,species,1,Aus alba\nColeoptera,Betidae,Bus atra,species,2,Bus atra\nColeoptera,Cetidae,Cus rubra,species,1,Cus rubra\nColeoptera,Gammidae,Aus alba,species,1,Aus alba\n';
+el('#exBtn').onclick=()=>{ const enc=new TextEncoder(); FILES.length=0; RESULT=null; el('#results').innerHTML='';
+ el('#tblData').checked=false; readTable(EX_TABLE);
+ FILES.push(readChecklist('example_area_A.csv',enc.encode(EX_A).buffer),readChecklist('example_area_B.csv',enc.encode(EX_B).buffer));
+ renderFiles(); refreshRun(); runAll(); };
+el('#authorline').innerHTML=authorLineHTML();
+el('#ver').textContent=TOOL_NAME+' '+VERSION;
+renderFiles(); renderDownloads(); refreshRun();
+</script></body></html>

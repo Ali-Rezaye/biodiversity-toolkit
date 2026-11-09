@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checklist Comparison — measure how similar two or more checklists are</title>
+<style>
+:root{--paper:#f4f1ea;--ink:#23211c;--ink-soft:#5b5852;--rule:#d6cfbe;--rule2:#e6e0d1;
+ --ui:#12556e;--ui-hi:#17698a;--ui-face:#e9e3d5;
+ --serif:Georgia,'Iowan Old Style',serif;--mono:'SFMono-Regular',Consolas,monospace}
+*{box-sizing:border-box}
+html{overflow-anchor:none}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:34px 24px 90px}
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:20px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+ color:var(--ink-soft);margin:0 0 10px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(26px,4.2vw,40px);line-height:1.06;
+ margin:0 0 10px;letter-spacing:-.01em}
+h1 em{color:#3f6b4a;font-style:italic}
+.lede{font-size:16.5px;color:var(--ink-soft);max-width:70ch;margin:0}
+.startbar{background:#eef4f7;border:1px solid #c5d8e2;border-left:4px solid var(--ui);
+ border-radius:6px;padding:12px 15px;margin:0 0 20px;font-size:13.5px;line-height:1.65}
+.startbar b{color:var(--ui)}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:7px;overflow:hidden;
+ background:var(--ui-face);box-shadow:inset 0 1px 2px #0000000d}
+.seg button{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+ background:transparent;color:#615b4d;border:0;padding:7px 12px;cursor:pointer;transition:background .12s}
+.seg button+button{border-left:1px solid #00000012}
+.seg button:hover:not(:disabled){background:#ffffff9c;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ui);color:#fff;font-weight:600}
+.seg button:disabled{opacity:.34;cursor:not-allowed}
+.seg button:focus-visible{outline:2px solid var(--ui-hi);outline-offset:2px;z-index:1}
+.btn{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+ background:var(--ui);color:#fff;border:0;padding:9px 14px;cursor:pointer;border-radius:7px;
+ box-shadow:0 1px 0 #00000026,inset 0 1px 0 #ffffff2e}
+.btn:hover{background:var(--ui-hi)}
+.btn:disabled,.btn:disabled:hover{opacity:.38;cursor:not-allowed;background:transparent}
+.btn.ghost{background:transparent;color:var(--ui);border:1.5px solid var(--ui);box-shadow:none}
+.btn.ghost:hover{background:#12556e14}
+.btn:focus-visible{outline:2px solid var(--ui-hi);outline-offset:2px}
+h2{font-family:var(--serif);font-size:22px;margin:34px 0 6px;font-weight:600}
+h2:first-of-type{margin-top:26px}
+.sect{font-size:14px;color:var(--ink-soft);max-width:78ch;margin:0 0 14px}
+.note{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);margin:6px 0 12px;line-height:1.65}
+.warn{background:#fcf1dc;border-left:3px solid #d08a2c;padding:9px 12px;font-size:13px;
+ color:#7a4f10;margin:0 0 14px;max-width:80ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin:8px 0 16px}
+th,td{border:1px solid var(--rule);padding:6px 10px;text-align:right;white-space:nowrap}
+th{background:#efeade;font-weight:600}
+td.name,th.name{text-align:left;font-family:var(--serif);font-size:13px}
+td.diag{background:#f2eee3;color:var(--ink-soft)}
+td.grp{background:#e8e2d4;text-align:left;font-family:var(--mono);font-size:10px;
+ letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);
+ padding-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.area{width:104px;font-family:var(--mono);font-size:11px;padding:3px 6px;border:1px solid var(--rule);border-radius:4px}
+.del{border:0;background:none;color:#a3341f;cursor:pointer;font-size:14px}
+td.mv{white-space:nowrap;padding:3px 6px}
+th.lab{white-space:normal;max-width:150px;overflow-wrap:anywhere;line-height:1.35}
+.labedit{cursor:text;border-bottom:1px dashed var(--rule);padding:0 2px;outline:none}
+.labedit:hover,.labedit:focus{border-bottom-color:var(--ui);background:#fff}
+#areaNote{margin-top:6px}
+.mvb{border:1px solid var(--rule);background:#fff;color:var(--ui);cursor:pointer;font-size:10px;line-height:1;
+  padding:5px 7px;border-radius:4px;margin:0 1px}
+.mvb:hover:not(:disabled){background:#12556e14}
+.mvb:disabled{opacity:.3;cursor:default}
+.mvb:focus-visible{outline:2px solid var(--ui-hi);outline-offset:1px}
+.s0{background:#ffffcc;color:#23211c}.s1{background:#a1dab4;color:#23211c}.s2{background:#41b6c4;color:#23211c}
+.s3{background:#225ea8;color:#ffffff}.s4{background:#0c2c84;color:#ffffff}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:-8px 0 18px;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft)}
+.legend .lg{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.legend i{display:inline-block;width:16px;height:12px;border:1px solid #c9c1ae}
+.legend .lgnote{flex-basis:100%}
+svg.tree line{stroke:#23211c;stroke-width:1.4}
+svg.tree text{font-family:Consolas,"SFMono-Regular",monospace;font-size:12px;fill:#23211c}
+svg.tree text.tk{font-size:10px;fill:#5b5852}
+h2 .h2sub{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink-soft)}
+h1.statement{font-size:clamp(22px,3vw,30px);line-height:1.22}
+.authors{margin-top:12px;padding-top:10px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);line-height:1.75}
+.authors a{color:var(--ui)}
+.method{font-family:var(--mono);font-size:11px;color:var(--ink);margin:4px 0 2px}
+.linkhelp{margin:-2px 0 8px}
+.treebar{margin:4px 0 6px}
+.hl{background:#fff;border:1px solid var(--rule);border-left:4px solid var(--ui);border-radius:6px;padding:10px 14px;margin:2px 0 18px;font-size:13.5px;line-height:1.75}
+.hl b{font-family:var(--mono);font-size:12px}
+.hl .warnline{color:#7a4f10}
+.dl{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:9px 12px;margin:4px 0 16px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.dl>b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.dlnote,.dlwhy{font-family:var(--mono);font-size:10px;color:var(--ink-soft)}
+.dlg{display:inline-flex;align-items:center;gap:4px;margin-right:4px}
+.dl>.dlnote{margin:0 8px 0 2px}
+.dl>div.dlnote{flex-basis:100%}
+.printonly{display:none}
+/* v1.15 */
+#usertitle{outline:none;border-bottom:1px dashed transparent;cursor:text}
+#usertitle:hover,#usertitle:focus{border-bottom-color:var(--rule)}
+.titlehint{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);margin:-4px 0 10px}
+.hintarrow{display:inline-block;margin-right:7px;color:var(--ui);font-size:18px}
+.credline{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:2px 0}
+.credlab{color:var(--ink)}
+.credline.src{margin-bottom:14px}
+.credval{outline:none;border-bottom:1px dashed var(--rule);padding:0 2px;cursor:text;min-width:4em;display:inline-block}
+.credval:empty::before{content:attr(data-ph);color:#a39d90;font-style:italic}
+.fitnote .warnline,.warnline{color:#7a4f10}
+@media print{
+ @page{margin:10mm}
+ html,body{background:#fff}
+ body{font-size:11px}
+ .wrap{max-width:none!important;width:auto;margin:0;padding:0}
+ .startbar,.bar,.warn,#areaNote,#empty,#downloads,#names,#matrix,.treebar,.linkhelp,.noprint,.titlehint,
+ button,input[type=file],.mv,.act,.labedit:empty{display:none!important}
+ .credline.empty{display:none!important}
+ .credval{border:0}
+ .printonly{display:block;font-family:var(--mono);font-size:9pt;color:#5b5852;margin:0 0 6px}
+ .area{border:0;background:transparent;padding:0;width:auto;font:inherit}
+ .area::placeholder{color:transparent}
+ .scroll{overflow:visible!important}
+ /* Tables and matrices span the printable width and shrink to fit it: a fixed layout shares
+    the width among the columns, and long labels wrap rather than spill off the page. */
+ #lists table,.mx table{width:100%!important;table-layout:fixed}
+ table{font-size:8pt}
+ th,td{padding:3px 4px;overflow-wrap:anywhere}
+ th.lab{max-width:none}
+ th.name,td.name{white-space:normal;width:20%;overflow-wrap:anywhere}
+ svg.tree{width:100%!important;max-width:100%!important;height:auto}
+ /* Nothing is split across pages: each table, matrix and tree moves whole to the next page. */
+ table,.mx,#tree,svg.tree,.hl,.legend,.fitnote{break-inside:avoid;page-break-inside:avoid}
+ h2{break-after:avoid;page-break-after:avoid}
+ a{color:inherit;text-decoration:none}
+}
+.tietoggle{color:var(--ui);text-decoration:underline dotted;cursor:pointer}
+.tielist{font-family:var(--mono);font-size:11px;color:var(--ink-soft);background:#f6f3ec;border-radius:4px;padding:6px 9px;margin:4px 0}
+tr.t0 td{background:#fcf1dc}
+tr.t1 td{background:#eef4e9}
+tr.xl td.name:first-child{border-left:3px solid var(--ui)}
+.mtx td.one{background:#2f6b52;color:#fff}
+.mtx td.zero{color:#c9c2b2}
+footer{margin-top:44px;border-top:2px solid var(--ink);padding-top:16px;
+ font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);line-height:1.75}
+</style></head>
+<body><div class="wrap">
+<header>
+ <p class="eyebrow">Checklist comparison &middot; any taxonomic group &middot; runs offline</p>
+ <h1 class="statement" id="usertitle" contenteditable="true" spellcheck="false" title="Click to type your own title">Measure how similar two or more checklists are &mdash; for any group of organisms (plants, animals, fungi, microbes), and whether the checklists come from <em>areas, habitats or hosts</em>.</h1>
+ <p class="titlehint"><span class="hintarrow" aria-hidden="true">&#8593;</span>Click the title to replace it with your own — it is used on exported figures.</p>
+ <p class="credline"><span class="credlab">Data contributors:</span> <span class="credval" id="credContrib" contenteditable="true" spellcheck="false" data-ph="(click to add)"></span></p>
+ <p class="credline src"><span class="credlab">Data source:</span> <span class="credval" id="credSource" contenteditable="true" spellcheck="false" data-ph="(click to add)"></span></p>
+ <p class="lede">This tool compares pairs of areas, habitats or hosts in terms of how many taxa they share and how many
+  unshared taxa are present in each, calculating their similarity in terms of three
+  different indices. It works solely with the names in lists you upload and the
+  classification they reflect. This means it works equally for plants, spiders, mammals
+  or fungi &mdash; the names at each level come from your own columns.</p>
+</header>
+
+<div class="startbar">
+ <b>Start here:</b> press <b>Add checklists</b> and choose two or more CSV files. Select several files at
+ once to load them together. Each list must include at least one column of scientific names at some rank,
+ but to calculate similarity at different ranks it should include a column for each rank to be considered,
+ with each column labelled to show the rank, e.g., phylum, class, order, suborder, family, genus, species.
+ Other headers accepted for the name column: <b>speciesBinomial</b> (the full two-word name, not the
+ epithet alone), <b>scientificName</b>, <b>species</b>, <b>acceptedScientificName</b>.
+ Whichever ranks are present become available for comparison. Order, class and phylum
+ are used only when your file has a column for them; the tool does not infer higher ranks from a
+ family name. Once your files are loaded, type each region's area into the <b>Area</b> column of the
+ table. Any unit works &mdash; square kilometres, hectares &mdash; as long as every row uses the same one.
+ Taxon density is then taxa per 1,000 of that unit. Nothing is uploaded anywhere; the file runs entirely
+ in your browser.
+</div>
+
+<div class="bar">
+ <button class="btn" id="add">Add checklists&hellip;</button>
+ <input type="file" id="file" accept=".csv,.tsv,.txt" multiple hidden>
+ <span class="lbl">Compare at</span>
+ <div class="seg" id="segRank"></div>
+ <button class="btn ghost" id="addArea">Load areas (CSV)&hellip;</button>
+ <input type="file" id="areaFile" accept=".csv,.tsv,.txt" hidden>
+ <button class="btn ghost" id="clear">Clear</button>
+</div>
+<div class="warn" style="margin-bottom:14px">The name check flags spellings that look alike and names with conflicting authorship. It does not validate names against any taxonomy &mdash; check names first with <a href="https://tnrs.biendata.org/" target="_blank" rel="noopener">TNRS</a> or <a href="https://www.checklistbank.org/" target="_blank" rel="noopener">ChecklistBank</a>.</div>
+<div id="areaNote" class="note"></div>
+<div id="empty" class="note">No checklists loaded yet.</div>
+
+<div id="downloads"></div>
+<div id="printprov" class="printonly"></div>
+<div id="names"></div>
+<div id="lists" class="scroll"></div>
+<div id="highlights"></div>
+<div id="tree"></div>
+<div id="out"></div>
+<div id="matrix"></div>
+
+<footer>
+ Jaccard = a / (a + b + c) &nbsp;&middot;&nbsp; S&oslash;rensen = 2a / (2a + b + c) &nbsp;&middot;&nbsp;
+ Simpson = a / min(a + b, a + c), where <i>a</i> is the taxa shared and <i>b</i>, <i>c</i> those unique to
+ each list. All three use presence and absence only, which is what a checklist contains. They are sensitive
+ to how completely each area has been surveyed: an under-collected region will look less similar to
+ everything. Taxon density is taxa per 1,000 units of the area you enter, and because the number of taxa does not rise in
+ proportion to area, values for regions of very different size are not directly comparable.
+ <span id="ver"></span>
+ <div class="authors" id="authorline"></div>
+</footer>
+</div>
+<script>
+const VERSION='v1.16';
+const AUTHORS=[{name:'Ali Rezaye',aff:'Somaliland Biodiversity Foundation',orcid:'0009-0003-3560-4672'},
+ {name:'Mary E. Barkworth',aff:'Somaliland Biodiversity Foundation; Utah State University',orcid:'0000-0001-9785-1538'}];
+const TOOL_NAME='Checklist Comparison';
+const AI_LINE='Developed with assistance from Claude (Anthropic).';
+/* In a figure the author line is too long for one row: one row per author, then the AI line. */
+function authorLinesFig(){ return [`Software: ${AUTHORS[0].name} (${AUTHORS[0].aff}, ORCID ${AUTHORS[0].orcid}) \u00b7`,
+  `${AUTHORS[1].name} (${AUTHORS[1].aff}, ORCID ${AUTHORS[1].orcid}) \u00b7 ${TOOL_NAME} ${VERSION}`, AI_LINE]; }
+function authorLineHTML(){ return 'Software: '+AUTHORS.map(a=>`${esc(a.name)} (${esc(a.aff)}, ORCID <a href="https://orcid.org/${a.orcid}" target="_blank" rel="noopener">${a.orcid}</a>)`).join(' &middot; ')+
+  ` &middot; ${TOOL_NAME} ${VERSION}<br>${AI_LINE}`; }
+/* Tautonyms are valid in zoology; set before any name is parsed (see parseName header). */
+window.NAME_POLICY_HOST={countTautonyms:true};
+/* ================================================================== *
+ *  parseName — the one name parser used by both tools.
+ *
+ *  Written to plant_name_parsing_specification.md (ICN articles cited
+ *  there) and tested against name_parsing_test_corpus.csv. This block is
+ *  injected byte-identical into the Viewer and the Comparer; the build
+ *  refuses to ship if the two copies differ.
+ *
+ *  Result fields:
+ *    kind        'species' | 'infraspecific' | 'genus' | 'family' |
+ *                'formula' | 'placeholder' | 'damaged' | 'none'
+ *    genus       capitalised, folded; null if none
+ *    epithet     lower-case, folded; null unless a species epithet exists
+ *    binomial    'genus epithet' lower-case, folded, no hybrid sign —
+ *                the counting key; null unless species-level
+ *    family      the family name if the string IS one
+ *    rank        deepest rank determined
+ *    isHybrid    a named nothotaxon (not a formula)
+ *    isFormula   a hybrid formula (Art. H.2) — never a species
+ *    isOpen      sp./spp./cf./aff./indet./?/sp. nov./sp. A
+ *    qualifier   the open-nomenclature token found, or null
+ *    infra       [{rank, epithet}] in order
+ *    authorship  trailing citation text, verbatim
+ *    damaged     contains U+FFFD (encoding wreckage)
+ *    counts      strict-default verdict, with the policy switches below
+ *
+ *  Policy switches — spec §9. Every (B) item was ruled on by M. Barkworth,
+ *  23 Sep 2026; the settings below are her decisions. 'grex' is not an ICN
+ *  rank (it is ICNCP/zoological) and was removed from the rank list on the
+ *  same ruling: Diospyros grex F.White is an accepted species.
+ *
+ *  A host page may override any switch by setting window.NAME_POLICY_HOST
+ *  before calling parseName; the merge happens at call time, so this block
+ *  stays byte-identical in every tool. The Viewer (plants, ICN) sets nothing.
+ *  The Comparer sets {countTautonyms:true}: tautonyms are valid under the
+ *  ICZN (Bison bison) and illegitimate only under the ICN (Art. 23.4).
+ * ================================================================== */
+const NAME_POLICY = {
+  countHybrids: true,          // named nothotaxa count as species
+  countCfAff: false,           // B1 ruled: not a species — note it
+  countAggregates: true,       // B2 ruled: count as the species — note it
+  countCultivars: true,        // B3 ruled: count as the species — note it
+  countTautonyms: false,       // B4 ruled: not a species; surface as unplaced so the name is corrected
+  countBareRank: true          // B5 ruled: count; ignore the dangling rank term
+};
+
+const NAME_FAMILY_ALT = new Set(['compositae','cruciferae','gramineae','guttiferae','labiatae',
+  'leguminosae','palmae','umbelliferae','papilionaceae']);            /* ICN Art. 18.5–18.6 */
+const NAME_RANKS = /^(subsp|ssp|var|subvar|f|fo|forma|form|subf|nothosubsp|nothossp|nothovar|nothof|nvar|cv|convar|prol|proles|agg|sect|ser|nothosect|nothoser|subgen|subg|race|lus|lusus)\.?$/i;
+const NAME_OPEN  = /^(sp|spp|spec|indet|indent|cf|aff|nov|ined|nr|gen|species|incertae|sedis|\?)\.?$/i;
+const NAME_PLACEHOLDER = /^\s*(none|not|no|unidentified|unknown|indet|indeterminate|n\/a|na|null|nil|unnamed|undetermined|unplaced|incertaesedis|-+|\.+)(\s|$|\.)/i;
+/* tokens that can sit in the epithet position without being epithets (gnparser exceptions) */
+const NAME_IMPOSTOR = /^(ex|gr|dos|de|la|von|van|der|den|del|du|le|et|in|non|sensu|auct|unr|sect|ser|subgen|subg)\.?$/;
+
+function nameFold(s){
+  /* Art. 60.7 transcription as gnparser applies it: umlauts and Nordic vowels
+     become digraphs, ligatures separate, every other diacritic is dropped. */
+  s = s.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue')
+       .replace(/å/g,'ao').replace(/Å/g,'Ao').replace(/ø/g,'oe').replace(/Ø/g,'Oe')
+       .replace(/æ/g,'ae').replace(/Æ/g,'Ae').replace(/œ/g,'oe').replace(/Œ/g,'Oe').replace(/ß/g,'ss');
+  return s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function parseName(raw){
+  const POL = Object.assign({}, NAME_POLICY, (typeof window!=='undefined' && window.NAME_POLICY_HOST) || {});
+  const out = {verbatim:raw==null?'':String(raw), kind:'none', genus:null, epithet:null, binomial:null, family:null,
+    rank:null, isHybrid:false, isFormula:false, isOpen:false, qualifier:null, infra:[], authorship:'', damaged:false, counts:false, note:null,
+    tautonym:false, aggregate:false, cultivar:false, bareRank:false};
+  let s = out.verbatim;
+
+  /* --- settle bytes before grammar (spec §1) --- */
+  if(/\uFFFD/.test(s)){ out.damaged=true; }
+  if(/†/.test(s)) out.note='extinct';
+  s = s.replace(/[\u00a0\u2000-\u200b\u3000]/g,' ')        /* exotic spaces */
+       .replace(/_/g,' ')                                     /* underscores for spaces (A4) */
+       .replace(/[\u2010-\u2015]/g,'-')                       /* dashes to hyphen */
+       .replace(/†/g,' ')                                     /* extinction dagger (B6) */
+       .replace(/\(/g,' (').replace(/\)/g,') ')               /* authorship parentheses as boundaries (A6) */
+       .replace(/\s+/g,' ').trim();
+  if(!s) return out;
+
+  /* --- placeholders (spec §4): not a name --- */
+  if(NAME_PLACEHOLDER.test(s)){ out.kind='placeholder'; return out; }
+  if(/\b(viroid|virus|phage|satellite)\b/i.test(s)){ out.kind='none'; out.note='not a plant name'; return out; }
+
+  s = nameFold(s);
+  let toks = s.split(' ').filter(Boolean);
+
+  /* --- hybrid marker before the genus: nothogenus (Art. H.6) --- */
+  if(/^[×xX]$/.test(toks[0]) && toks.length>1 && /^[A-Z]/.test(toks[1])){ out.isHybrid=true; toks.shift(); }
+  else if(/^[×xX][A-Z]/.test(toks[0]||'')){ out.isHybrid=true; toks[0]=toks[0].slice(1); }
+
+  /* --- a family name in the genus position (Art. 18) --- */
+  const t0 = toks[0]||'';
+  if(/^[A-Z][a-z-]+aceae$/.test(t0) || NAME_FAMILY_ALT.has(t0.toLowerCase())){
+    out.kind='family'; out.family=t0; out.rank='family'; return out;
+  }
+  /* --- names above genus rank by their ending, never genera ---
+     -idae: family under the ICZN (Lycosidae), subclass under the ICN (Rosidae). No genus
+            in the 17,275-genus map ends -idae, so this applies everywhere.
+     -inae: subfamily (ICZN) / subtribe (ICN). -oidea: superfamily (ICZN).
+            Real genera DO end this way (Tarennoidea, Vulpinae and five others), so these
+            two endings apply only to a word standing alone: a binomial such as
+            Tarennoidea wallichii is always read as a species. */
+  if(/^[A-Z][a-z]+idae$/.test(t0)){
+    out.kind='family'; out.family=t0; out.rank='family'; return out;
+  }
+  if(toks.length===1 && /^[A-Z][a-z]+(inae|oidea)$/.test(t0)){
+    out.kind='family'; out.family=t0; out.rank=/oidea$/.test(t0)?'superfamily':'subfamily'; return out;
+  }
+
+  /* --- genus (Art. 20): capitalised, may be hyphenated (Drake-brockmania, Saxo-Fridericia) --- */
+  if(!/^[A-Z][a-z]+(-[A-Za-z][a-z]*)*$/.test(t0)) return out;      /* abbreviated (M.), lower-case, noise */
+  out.genus = t0.charAt(0).toUpperCase()+t0.slice(1).replace(/-([A-Z])/g,(m,c)=>'-'+c.toLowerCase());
+  let i=1;
+
+  /* --- zoological subgenus in parentheses: tolerated and skipped --- */
+  if(/^\([A-Z][a-z]+\)$/.test(toks[i]||'')) i+=1;
+  else if(toks[i]==='(' && /^[A-Z][a-z]+$/.test(toks[i+1]||'') && toks[i+2]===')') i+=3;
+
+  /* --- hybrid marker before the epithet: nothospecies --- */
+  if(/^[×xX]$/.test(toks[i]||'') && /^[a-z]/.test(toks[i+1]||'')){ out.isHybrid=true; i++; }
+  else if(/^×[a-z]/.test(toks[i]||'')){ out.isHybrid=true; toks[i]=toks[i].slice(1); }
+
+  const cand = toks[i]||'';
+  if(!cand){ out.kind='genus'; out.rank='genus'; return out; }
+  if(/^[×xX]$/.test(cand)){ out.kind='formula'; out.isFormula=true; out.rank='hybrid_formula'; return out; }
+
+  /* --- open nomenclature in the epithet position: genus-level determination --- */
+  const nextCap = /^[A-Z(]/.test(toks[i+1]||'');
+  const abbrevAsEpithet = !/\.$/.test(cand) && nextCap && /^(spec|ser|sect|var|f|fo)$/.test(cand);
+  if(NAME_IMPOSTOR.test(cand) && !abbrevAsEpithet){ out.kind='genus'; out.rank='genus'; out.authorship=toks.slice(i).join(' '); return out; }
+  if(NAME_OPEN.test(cand) && !abbrevAsEpithet){
+    out.isOpen=true; out.qualifier=cand.replace(/\.$/,'').toLowerCase();
+    if(out.qualifier==='cf'||out.qualifier==='aff'){
+      const ep=toks[i+1]||'';
+      if(/^[a-z][a-z'.-]+$/.test(ep) && !NAME_RANKS.test(ep)){
+        out.epithet=ep; out.kind='species'; out.rank='species';
+        out.binomial=(out.genus+' '+ep).toLowerCase();
+        out.counts=POL.countCfAff; out.authorship=toks.slice(i+2).join(' ');
+        return out;
+      }
+    }
+    out.kind='genus'; out.rank='approximate'; return out;
+  }
+  /* an epithet: lower-case, may hold ' . - internally (A5); a capital here is authorship on a uninomial */
+  if(!/^[a-z][a-z'.\uFFFD-]*[a-z.\uFFFD]$/.test(cand) || cand.length<2){
+    out.kind='genus'; out.rank='genus'; out.authorship=toks.slice(i).join(' '); return out;
+  }
+  if(NAME_RANKS.test(cand) && !abbrevAsEpithet){ out.kind='genus'; out.rank='genus'; return out; }   /* 'Poa subsp.' fragment */
+  out.epithet=cand.toLowerCase(); i++;
+
+  const tautonym = out.epithet===out.genus.toLowerCase();
+
+  /* A formula marker anywhere after the epithet makes the whole string a formula
+     (Art. H.2.1) — including after a first parent's authorship: 'Salix aurita L. × S. caprea L.' */
+  for(let k=i;k<toks.length;k++){
+    const t=toks[k], nxt=toks[k+1]||'';
+    if(/^[×]$/.test(t) || (/^[xX]$/.test(t) && (nxt===''||/^[A-Z?]/.test(nxt)||/^[a-z]/.test(nxt))) || /^×[A-Za-z?]/.test(t)){
+      out.kind='formula'; out.isFormula=true; out.rank='hybrid_formula'; out.binomial=null; out.counts=false; return out;
+    }
+  }
+  if(toks.slice(i).some(t=>t==='?')){ out.isOpen=true; out.qualifier='?'; }
+  if(/\bp\.\s?p\.$/i.test(toks.slice(i).join(' '))){ out.isOpen=true; out.qualifier='p.p.'; }
+
+  /* --- after the epithet: ranks, qualifiers and authorship interleave (spec §2), so the
+         whole tail is scanned; nothing stops at the first author token. Rank terms are
+         lower-case: 'F.' after an author is an initial, 'f.' after an epithet is forma. --- */
+  let hasInfra=false, bareRank=false, aggregate=false, cultivar=false; const auth=[];
+  for(; i<toks.length; i++){
+    const t=toks[i], tl=t.toLowerCase();
+    if(t===tl && NAME_RANKS.test(t)){
+      const rk=tl.replace(/\.$/,'');
+      if(rk==='agg'){ aggregate=true; out.rank='aggregate'; continue; }
+      if(rk==='cv'||rk==='convar'){ cultivar=true; out.rank='cultivar'; continue; }
+      let ep=toks[i+1]||'';
+      if(/^[α-ω]\.?$/.test(ep)){ i++; ep=toks[i+1]||''; }                 /* Greek-letter rank marker (pre-1900) */
+      /* 'f.' after authorship is filius, not forma: only a lower-case epithet makes it a rank */
+      if(/^[a-z][a-z'.-]+$/.test(ep) && !NAME_RANKS.test(ep) && !NAME_OPEN.test(ep) && !NAME_IMPOSTOR.test(ep)){
+        out.infra.push({rank:rk, epithet:ep}); hasInfra=true; i++;
+        out.rank = ({subsp:'subspecies',ssp:'subspecies',nothosubsp:'subspecies',nothossp:'subspecies',
+                     var:'variety',nvar:'variety',nothovar:'variety',subvar:'subvariety',
+                     f:'form',fo:'form',forma:'form',form:'form',nothof:'form',subf:'subform',
+                     prol:'proles',proles:'proles'})[rk] || 'infraspecific';
+        continue;
+      }
+      if(/^(ssp|subsp|var|subvar|fo|subf)$/.test(rk)) bareRank=true;               /* B5 */
+      if(rk==='f' && auth.length===0) bareRank=true;                                  /* 'f.' right after the epithet with no epithet following */
+      continue;
+    }
+    if(tl==='species'||tl==='complex'||tl==='group'){ aggregate=true; out.rank='aggregate'; continue; }
+    if(/^spp\.?$/.test(tl)){ bareRank=true; continue; }                                  /* B5 misuse */
+    if(/^unr\.?$/.test(tl) && /^[A-Z]/.test(toks[i+1]||'')){ out.kind='genus'; out.rank='infrageneric'; out.epithet=null; out.binomial=null; out.counts=false; return out; }
+    if(NAME_OPEN.test(t) && /^(cf|aff)/.test(tl)){ out.isOpen=true; out.qualifier=tl.replace(/\.$/,''); continue; }
+    if(t==='?'){ out.isOpen=true; out.qualifier='?'; continue; }
+    auth.push(t);
+  }
+  out.authorship=auth.join(' ');
+  if(/-group$/.test(out.epithet)){ aggregate=true; out.rank='aggregate'; out.epithet=out.epithet.replace(/-group$/,''); }
+
+  out.epithet=out.epithet.replace(/['.]/g,'');
+  out.binomial=(out.genus+' '+out.epithet).toLowerCase();
+  out.kind = hasInfra ? 'infraspecific' : 'species';
+  if(!out.rank) out.rank='species';
+
+  /* --- counting, spec §9 --- */
+  let counts=true;
+  if(out.damaged && /\uFFFD/.test(out.genus+' '+out.epithet)) counts=false;
+  if(out.isOpen && /^(cf|aff|\?|p\.p\.)$/.test(out.qualifier)) counts=POL.countCfAff;
+  if(out.isHybrid && !POL.countHybrids) counts=false;
+  if(aggregate) counts=POL.countAggregates;
+  if(cultivar)  counts=POL.countCultivars;
+  if(tautonym)  counts=POL.countTautonyms;
+  if(bareRank)  counts=POL.countBareRank;
+  out.counts=counts;
+  out.tautonym=tautonym; out.aggregate=aggregate; out.cultivar=cultivar; out.bareRank=bareRank;
+  return out;
+}
+/* ====================== end shared parser ====================== */
+/* ================================================================== *
+ *  clusterTree — the one hierarchical-clustering block used by both tools.
+ *
+ *  Injected byte-identical into the Viewer and the Comparer; the build
+ *  refuses to ship if the two copies differ. It knows nothing about
+ *  either tool: it is given the items to cluster (their indices, in
+ *  display order), a distance function between two items, and a
+ *  linkage rule. Each tool supplies only those.
+ *
+ *  Agglomerative clustering. The rule for the distance between a newly
+ *  joined group and every other group is the only thing the linkage
+ *  changes:
+ *    single   nearest neighbour  — the closest pair of members (min)
+ *    average  UPGMA              — the mean over all member pairs
+ *    complete furthest neighbour — the most distant pair of members (max)
+ *
+ *  Ties are broken by display order, and within each join the group whose
+ *  earliest member is listed first is drawn first, so the same data always
+ *  gives the same tree and reordering by it is idempotent.
+ * ================================================================== */
+const LINKAGE_NAME={single:'nearest neighbour (single linkage)',average:'UPGMA (average linkage)',complete:'furthest neighbour (complete linkage)'};
+const LINKAGE_JOIN={single:'between their closest members',average:'averaged over their members',complete:'between their most distant members'};
+const LINKAGE_HELP='UPGMA is the method most used in ecology; the others are offered for comparison.';
+function clusterAgglomerate(ids,dist,linkage){
+ if(ids.length<2) return null;
+ let C=ids.map(i=>({members:[i],first:i,h:0,kids:null,leaf:i}));
+ let D=C.map((p,a)=>C.map((q,b)=>a===b?0:dist(p.leaf,q.leaf)));
+ while(C.length>1){
+  let bi=-1,bj=-1,bd=Infinity;
+  for(let a=0;a<C.length;a++) for(let b=a+1;b<C.length;b++){
+   const d=D[a][b];
+   if(d<bd-1e-12){ bd=d; bi=a; bj=b; }
+   else if(Math.abs(d-bd)<=1e-12){
+    const k1=[Math.min(C[a].first,C[b].first),Math.max(C[a].first,C[b].first)];
+    const k0=[Math.min(C[bi].first,C[bj].first),Math.max(C[bi].first,C[bj].first)];
+    if(k1[0]<k0[0]||(k1[0]===k0[0]&&k1[1]<k0[1])){ bi=a; bj=b; }
+   }
+  }
+  const p=C[bi], q=C[bj], np=p.members.length, nq=q.members.length;
+  const m={members:[...p.members,...q.members],first:Math.min(p.first,q.first),h:bd,kids:p.first<q.first?[p,q]:[q,p],leaf:null};
+  const keep=C.map((_,k)=>k).filter(k=>k!==bi&&k!==bj);
+  const row=keep.map(k=> linkage==='single'   ? Math.min(D[bi][k],D[bj][k])
+                       : linkage==='complete' ? Math.max(D[bi][k],D[bj][k])
+                       : (np*D[bi][k]+nq*D[bj][k])/(np+nq));
+  const D2=keep.map((a,ia)=>keep.map(b=>D[a][b]).concat([row[ia]])); D2.push(row.concat([0]));
+  C=keep.map(k=>C[k]).concat([m]); D=D2;
+ }
+ return C[0];
+}
+function leafOrder(n){ return n.kids?[...leafOrder(n.kids[0]),...leafOrder(n.kids[1])]:[n.leaf]; }
+/* One layout, drawn by the SVG on screen and by every PNG, so they cannot differ.
+   Conventional layout: leaves at the right (distance 0), labels to their right, the root
+   toward the left. T is {root, left}; labelW is the widest label in pixels. */
+function treeLayout(T,labelW){
+ const order=leafOrder(T.root), leafH=22, top=8, treeW=360;
+ const axMax=Math.max(0.1,Math.min(1,Math.ceil((T.root.h-1e-9)*10)/10));
+ const left=16, X=h=>left+treeW-(h/axMax)*treeW, labelX=left+treeW+6, yOf={}; order.forEach((i,k)=>yOf[i]=top+k*leafH+leafH/2);
+ const segs=[];
+ (function walk(n){ if(!n.kids){ n._y=yOf[n.leaf]; return; }
+   walk(n.kids[0]); walk(n.kids[1]); const x=X(n.h); n._y=(n.kids[0]._y+n.kids[1]._y)/2;
+   segs.push([x,n.kids[0]._y,x,n.kids[1]._y]); n.kids.forEach(k=>segs.push([X(k.h),k._y,x,k._y])); })(T.root);
+ segs.push([X(T.root.h),T.root._y,X(T.root.h)-10,T.root._y]);
+ const axisY=top+order.length*leafH+10, step=axMax>0.5?0.2:0.1, ticks=[];
+ for(let t=0;t<=axMax+1e-9;t+=step) ticks.push(Math.round(t*100)/100);
+ return {order,yOf,segs,X,axisY,ticks,labelW,labelX,W:labelX+labelW+12,H:axisY+34,axMax};
+}
+function clEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* The tree as an SVG element; labelOf(i) gives an item's label, axisLabel the axis caption. */
+function treeSVG(Lt,labelOf,axisLabel){
+ let s=''; Lt.segs.forEach(([x1,y1,x2,y2])=>s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`);
+ let t=''; Lt.order.forEach(i=>t+=`<text x="${Lt.labelX}" y="${Lt.yOf[i]}" text-anchor="start" dominant-baseline="middle">${clEsc(labelOf(i))}</text>`);
+ let ax=`<line x1="${Lt.X(0)}" y1="${Lt.axisY}" x2="${Lt.X(Lt.axMax)}" y2="${Lt.axisY}"/>`;
+ Lt.ticks.forEach(v=>{ const x=Lt.X(v); ax+=`<line x1="${x}" y1="${Lt.axisY}" x2="${x}" y2="${Lt.axisY+4}"/><text x="${x}" y="${Lt.axisY+15}" text-anchor="middle" class="tk">${v.toFixed(1)}</text>`; });
+ ax+=`<text x="${(Lt.X(0)+Lt.X(Lt.axMax))/2}" y="${Lt.axisY+29}" text-anchor="middle" class="tk">${clEsc(axisLabel)}</text>`;
+ return `<svg class="tree" viewBox="0 0 ${Lt.W} ${Lt.H}" width="${Lt.W}" style="max-width:100%;height:auto" role="img" aria-label="Dendrogram">`+
+        `<g class="br">${s}</g><g class="lb">${t}</g><g class="ax">${ax}</g></svg>`;
+}
+/* The same tree on a canvas at (ox, oy): branches, labels, axis and axis caption. */
+function paintTreeBody(x,TL,ox,oy,labelOf,noteFont,axisLabel){
+ x.strokeStyle='#23211c'; x.lineWidth=1.4;
+ TL.segs.forEach(([x1,y1,x2,y2])=>{ x.beginPath(); x.moveTo(ox+x1,oy+y1); x.lineTo(ox+x2,oy+y2); x.stroke(); });
+ x.font='12px Consolas, "SFMono-Regular", monospace'; x.fillStyle='#23211c'; x.textBaseline='middle'; x.textAlign='left';
+ TL.order.forEach(i=>x.fillText(labelOf(i),ox+TL.labelX,oy+TL.yOf[i]));
+ x.lineWidth=1; x.beginPath(); x.moveTo(ox+TL.X(0),oy+TL.axisY); x.lineTo(ox+TL.X(TL.axMax),oy+TL.axisY); x.stroke();
+ x.font=noteFont; x.fillStyle='#5b5852'; x.textAlign='center';
+ TL.ticks.forEach(v=>{ const tx=ox+TL.X(v); x.beginPath(); x.moveTo(tx,oy+TL.axisY); x.lineTo(tx,oy+TL.axisY+4); x.stroke(); x.fillText(v.toFixed(1),tx,oy+TL.axisY+14); });
+ x.fillText(axisLabel,ox+(TL.X(0)+TL.X(TL.axMax))/2,oy+TL.axisY+27); x.textAlign='left'; x.textBaseline='alphabetic';
+}
+/* ====================== end shared clustering ====================== */
+/* ================================================================== *
+ *  speciesAreaFit — the one taxon–area fit used by both tools.
+ *
+ *  Injected byte-identical into the Viewer and the Comparer; the build
+ *  refuses to ship if the two copies differ. It knows nothing about either
+ *  tool: it is given one item per checklist, {S, A} — the number of taxa
+ *  at the chosen rank and the area — in display order.
+ *
+ *  Least squares on log10 S = log10 c + z log10 A over the items with both
+ *  S > 0 and A > 0. Shown only from three such items; flagged as
+ *  illustrative below six. c and z describe these regions and no others.
+ *  Observed ÷ expected = S / (c A^z), one value per item (null without area).
+ * ================================================================== */
+function speciesAreaFit(items){
+ const pts=items.filter(p=>p.S>0&&p.A>0);
+ const n=pts.length; if(n<3) return {n,ok:false};
+ const x=pts.map(p=>Math.log10(p.A)), y=pts.map(p=>Math.log10(p.S));
+ const mx=x.reduce((s,v)=>s+v,0)/n, my=y.reduce((s,v)=>s+v,0)/n;
+ const sxx=x.reduce((s,v)=>s+(v-mx)*(v-mx),0); if(!(sxx>0)) return {n,ok:false,flat:true};
+ const z=x.reduce((s,v,i)=>s+(v-mx)*(y[i]-my),0)/sxx, lc=my-z*mx, c=Math.pow(10,lc);
+ const sst=y.reduce((s,v)=>s+(v-my)*(v-my),0), ssr=y.reduce((s,v,i)=>s+Math.pow(v-(lc+z*x[i]),2),0);
+ const oe=items.map(p=>(p.S>0&&p.A>0)? p.S/(c*Math.pow(p.A,z)) : null);
+ return {n,ok:true,c,z,r2:sst>0?1-ssr/sst:null,oe};
+}
+/* The fit is named for the rank it is fitted at: "Family–area fit", "Species–area fit". */
+function fitLabel(rankName){ const r=String(rankName||'species'); return r.charAt(0).toUpperCase()+r.slice(1)+'\u2013area fit'; }
+/* The note under the table. noun is the plural shown to readers ("families"); rankName the
+   singular rank ("family"). */
+function fitNoteHTML(F,noun,rankName){
+ if(!F.ok) return `<div class="note fitnote" id="fitnote">Observed \u00f7 expected needs an area and ${noun} for at least three checklists (${F.n} so far).</div>`;
+ const fmtC=v=>v>=100?v.toFixed(1):v.toPrecision(4);
+ let t=`${fitLabel(rankName)}: log<sub>10</sub>S = log<sub>10</sub>c + z\u00b7log<sub>10</sub>A, with S the number of ${noun} \u2014 `+
+   `<b>c = ${fmtC(F.c)}</b>, <b>z = ${F.z.toFixed(3)}</b>, <b>R\u00b2 = ${F.r2===null?'\u2014':F.r2.toFixed(3)}</b>. `+
+   `Fitted on the ${F.n} checklists loaded; c and z describe these regions and no others.`;
+ if(F.n<6) t+=` <span class="warnline">Fitted on ${F.n} regions \u2014 below six the fit is illustrative only.</span>`;
+ t+=`<br>A region below expectation has fewer recorded ${noun} than its peers of similar size \u2014 because it is poorer, `+
+    `or because it is less well collected; this comparison cannot distinguish the two.`;
+ return `<div class="note fitnote" id="fitnote">${t}</div>`;
+}
+/* ====================== end shared taxon-area fit ====================== */
+
+const el=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- parsing ---------------- */
+/* One delimiter per file, chosen from the header line: a tab file is split only at tabs,
+   so a value such as 1,001,450 stays whole. Comma files are split only at commas. */
+let DELIM=',';
+function sniffDelim(header){ return header.includes('\t')?'\t':','; }
+function splitCSV(line,delim){
+ const d=delim||DELIM; const out=[];let cur='',q=false;
+ for(let i=0;i<line.length;i++){const ch=line[i];
+  if(q){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+  else { if(ch==='"')q=true; else if(ch===d){out.push(cur);cur='';} else cur+=ch; } }
+ out.push(cur);return out;
+}
+const RANKS=['phylum','subphylum','class','order','suborder','superfamily','family','subfamily','tribe','genus','species'];
+const RANK_TITLE={phylum:'Phyla',subphylum:'Subphyla',class:'Classes',order:'Orders',suborder:'Suborders',superfamily:'Superfamilies',
+  family:'Families',subfamily:'Subfamilies',tribe:'Tribes',genus:'Genera',species:'Species'};
+const RANK_SHORT={phylum:'Phyla',subphylum:'Subphyla',class:'Classes',order:'Orders',suborder:'Subord.',superfamily:'Superfam.',
+  family:'Families',subfamily:'Subfam.',tribe:'Tribes',genus:'Genera',species:'Species'};
+const HEADS={
+ phylum:['phylum','division'],
+ subphylum:['subphylum'],
+ class:['class'],
+ order:['order'],
+ suborder:['suborder'],
+ superfamily:['superfamily'],
+ family:['family'],
+ subfamily:['subfamily','subfam'],
+ tribe:['tribe'],
+ genus:['genus'],
+ species:['species','speciesbinomial','species_binomial','species binomial','scientificname','scientific_name','scientific name','speciesname','species_name',
+          'species name','taxon','taxonname','taxon name','binomial','binomen','fullname','full name',
+          'acceptedname','accepted name','acceptedscientificname','accepted_scientific_name',
+          'accepted scientific name','name','latinname','sciname']
+};
+function norm(s){
+ s=(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+ return s.replace(/[\u00d7\u00a0]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+}
+/* Split a name into genus and, where there is one, a species epithet.
+   Two things this must get right:
+   - a record identified only to genus (Astragalus, Carex sp., Quercus cf. robur)
+     still tells us the genus, so it counts at genus level even though it cannot
+     count at species level. Dropping it entirely loses real information.
+   - the markers of open nomenclature are not epithets. Treating "sp." as one
+     invents a species, which inflates the species count and, being unique to one
+     list, makes two checklists look less similar than they are. */
+/* Name handling is delegated to parseName(), shared byte-for-byte with the Viewer. */
+/* Areas are typed as 2,724,900 or 2 724 900. parseFloat stops at the first separator
+   and would silently return 2, so strip separators before parsing. */
+function parseArea(v){
+ if(v==null) return 0;
+ let t=String(v).trim().replace(/[\s\u00a0_]/g,'');
+ if(/,\d{1,2}$/.test(t) && !/\./.test(t)) t=t.replace(',','.');
+ t=t.replace(/,/g,'');
+ const n=parseFloat(t);
+ return (isFinite(n)&&n>0)?n:0;
+}
+function parseChecklist(text,name){
+ const lines=text.split(/\r?\n/).filter(x=>x.trim());
+ while(lines.length&&/^\s*"?#/.test(lines[0])) lines.shift();   /* an exported file's title and credit lines */
+ if(lines.length) DELIM=sniffDelim(lines[0]);
+ if(!lines.length) return null;
+ const head=splitCSV(lines[0]).map(h=>h.trim().toLowerCase());
+ /* An area column inside a checklist is a fallback for the areas file: first non-empty value. */
+ /* A records column (GBIF_record_count in the GBIF packages, or record_count) is summed. */
+ const rci=head.findIndex(h=>['gbif_record_count','record_count'].includes(h)); let recSum=null;
+ if(rci>=0){ recSum=0; for(let k=1;k<lines.length;k++){ const v=parseFloat((splitCSV(lines[k])[rci]||'').replace(/[, ]/g,'')); if(isFinite(v)) recSum+=v; } }
+ let fileArea=0; const ai=head.findIndex(h=>['area','area_km2'].includes(h));
+ if(ai>=0){ for(let k=1;k<lines.length;k++){ const a=parseArea(splitCSV(lines[k])[ai]); if(a>0){ fileArea=a; break; } } }
+ const col={};
+ RANKS.forEach(r=>{ const i=head.findIndex(h=>HEADS[r].includes(h)); if(i>=0) col[r]=i; });
+ /* A column headed "species" holding text is a name column, not a count. */
+ let speciesIsName=true;
+ if(col.species!=null && head[col.species]==='species'){
+  let num=0,txt=0;
+  for(let i=1;i<Math.min(lines.length,60);i++){
+   const v=(splitCSV(lines[i])[col.species]||'').trim(); if(!v) continue;
+   if(/^\d+(\.\d+)?$/.test(v)) num++; else txt++;
+  }
+  if(num>txt){ speciesIsName=false; delete col.species; }
+ }
+ /* If no header matched, look at the values: a column of "Genus epithet" is unmistakable. */
+ let sniffed=null;
+ if(col.species==null){
+  const BIN=/^[A-Z][a-z\u00c0-\u017f-]+\s+(?:[\u00d7x]\s*)?[a-z\u00c0-\u017f-]{2,}/;
+  let best=-1,bh=0;
+  for(let c=0;c<head.length;c++){
+   if(Object.values(col).includes(c)) continue;
+   let hit=0,seen=0;
+   for(let i=1;i<Math.min(lines.length,60);i++){
+    const v=(splitCSV(lines[i])[c]||'').trim(); if(!v) continue;
+    seen++; if(BIN.test(v)) hit++;
+   }
+   if(seen>=3 && hit/seen>0.6 && hit>bh){best=c;bh=hit;}
+  }
+  if(best>=0){ col.species=best; sniffed=head[best]; }
+ }
+ const sets={}; RANKS.forEach(r=>sets[r]=new Set());
+ let records=0, genusOnly=0, unreadable=0, formulas=0, tautonyms=0, aggregates=0, cultivars=0, cfaff=0, supra=0;
+ /* Authorship is stripped for counting, but two taxa can share a binomial and differ
+    only by author. Keep what was seen so the merge is reported rather than silent. */
+ const AUTH={};
+ for(let i=1;i<lines.length;i++){
+  const c=splitCSV(lines[i]);
+  let any=false;
+  RANKS.forEach(r=>{
+   if(col[r]==null) return;
+   let v=(c[col[r]]||'').trim(); if(!v) return;
+   if(r==='species'){
+    const p=parseName(v);
+    if(p.damaged||p.kind==='none'||p.kind==='placeholder'){ unreadable++; return; }
+    if(p.kind==='family'){
+     /* A family name in the name column joins the family set. A name above or between
+        family and genus (Lycosoidea, Lycosinae) is not a family and joins nothing. */
+     if(p.rank==='family') sets.family.add(norm(p.family)); else supra++;
+     any=true; return; }
+    if(!p.genus){ unreadable++; return; }
+    if(p.isFormula) formulas++;
+    if(p.tautonym) tautonyms++;
+    if(p.aggregate && p.counts) aggregates++;
+    if(p.cultivar && p.counts) cultivars++;
+    if(p.binomial && !p.counts && p.isOpen) cfaff++;
+    if(p.binomial && p.counts && p.isHybrid){
+     const raw=String(v).trim(), lead=/^[\u00d7xX]\s*[A-Z]/.test(raw);
+     const sk='species|'+p.binomial;
+     if(!DISPLAY.has(sk)) DISPLAY.set(sk, lead? `\u00d7 ${p.genus} ${p.epithet}` : `${p.genus} \u00d7 ${p.epithet}`);
+     if(lead && !DISPLAY.has('genus|'+p.genus.toLowerCase())) DISPLAY.set('genus|'+p.genus.toLowerCase(), '\u00d7 '+p.genus);
+    }
+    if(p.binomial && p.counts){ sets.species.add(p.binomial);
+     if(p.authorship) (AUTH[p.binomial]=AUTH[p.binomial]||new Set()).add(p.authorship);
+    } else genusOnly++;
+    if(col.genus==null) sets.genus.add(p.genus.toLowerCase());
+   } else sets[r].add(norm(v));
+   any=true;
+  });
+  if(any) records++;
+ }
+ const have=RANKS.filter(r=>sets[r].size>0);
+ const plural=(n,one,many)=>n+' '+(n===1?one:many);
+ const authors={}; Object.entries(AUTH).forEach(([k,v])=>authors[k]=[...v]);
+ return {name, sets, have, records, genusOnly, unreadable, sniffed, area:fileArea, recSum, authors, ncols:Object.keys(col).length,
+         note:[ records+' records read',
+                have.length?('ranks found: '+have.join(', ')):'no recognisable taxon columns',
+                sniffed?('the "'+sniffed+'" column was read as names from its contents'):null,
+                Object.values(AUTH).filter(v=>v.size>1).length?(
+                  (h=>h.length+(h.length===1?' name appears':' names appear')+' with more than one authorship and '+
+                   (h.length===1?'was':'were')+' counted as one taxon \u2014 '+
+                   h.slice(0,2).map(([k,v])=>k.replace(/^./,c=>c.toUpperCase())+' ('+[...v].join('; ')+')').join(', ')+
+                   (h.length>2?', \u2026':''))(Object.entries(AUTH).filter(([k,v])=>v.size>1))):null,
+                genusOnly?(plural(genusOnly,'name','names')+' gave a genus but no species epithet \u2014 '+
+                  'counted at genus level, not at species level'):null,
+                formulas?(plural(formulas,'hybrid formula','hybrid formulae')+' (two parents named) counted at genus level'):null,
+                cfaff?(plural(cfaff,'record','records')+' with cf., aff. or ? \u2014 doubted, counted at genus level'):null,
+                aggregates?(plural(aggregates,'record','records')+' determined to an aggregate (agg., group, complex) \u2014 counted as the species named'):null,
+                cultivars?(plural(cultivars,'cultivar','cultivars')+' (cv.) counted as the species'):null,
+                tautonyms?(plural(tautonyms,'tautonym','tautonyms')+' (epithet repeats the genus) counted as species \u2014 valid in zoology (Bison bison); in a plant list it is an illegitimate name to correct'):null,
+                supra?(plural(supra,'name','names')+' above genus rank but not a family (subfamily, superfamily) \u2014 not counted at any rank'):null,
+                unreadable?(plural(unreadable,'entry','entries')+' could not be read as a name'):null
+              ].filter(Boolean).join(' \u00b7 ')};
+}
+
+/* Names are matched on lower-case keys but shown and exported as Genus epithet. A hybrid
+   keeps its sign in the display form (Mentha × piperita, × Agropogon), which the key cannot
+   carry because the sign is dropped from it so that Mentha × piperita and Mentha piperita
+   count as one taxon. The first form seen for a key is the one shown. */
+const DISPLAY=new Map();
+function dispName(key,rk){ const k=(rk||rank)+'|'+key; if(DISPLAY.has(k)) return DISPLAY.get(k);
+ return key? key.charAt(0).toUpperCase()+key.slice(1) : key; }
+/* ---------------- state ---------------- */
+const LIB=[]; let rank='species';
+const jac=(a,b,c)=>(a+b+c)?a/(a+b+c):null;
+const sor=(a,b,c)=>(2*a+b+c)?2*a/(2*a+b+c):null;
+const sim=(a,b,c)=>{const m=Math.min(a+b,a+c);return m?a/m:null;};
+const setOf=e=>e.sets[rank]||new Set();
+function ov(x,y){const A=setOf(x),B=setOf(y);let a=0;A.forEach(v=>{if(B.has(v))a++;});return{a,b:A.size-a,c:B.size-a};}
+/* Shading on FIXED cut-points of the 0-1 range, so a figure means the same in any paper.
+   Five distinct, colour-blind-safe colours (ColorBrewer YlGnBu): low similarity is pale,
+   high is dark. A value is banded on the number shown (3 decimals), so a cell reading
+   0.200 can never carry the "< 0.2" colour. Each band includes its lower bound. */
+const SHADE=['#ffffcc','#a1dab4','#41b6c4','#225ea8','#0c2c84'];
+const SHADE_INK=['#23211c','#23211c','#23211c','#ffffff','#ffffff'];
+const BANDS=['< 0.2','0.2 \u2013 0.4','0.4 \u2013 0.6','0.6 \u2013 0.8','\u2265 0.8'];
+const LEGEND_NOTE='Cut-points are fixed on the 0\u20131 range, not on the values present. Each band includes its lower bound.';
+function band(v){ if(v===null||v===undefined) return -1; const r=Math.round(v*1000)/1000; return r<0.2?0:r<0.4?1:r<0.6?2:r<0.8?3:4; }
+const heat=v=>{ const b=band(v); return b<0?'':'s'+b; };
+function legendHTML(){ return '<div class="legend">'+BANDS.map((t,i)=>`<span class="lg"><i style="background:${SHADE[i]}"></i>${t}</span>`).join('')+
+  `<span class="lgnote">${LEGEND_NOTE}</span></div>`; }
+const rankNoun=()=>({phylum:'phyla',subphylum:'subphyla',class:'classes',order:'orders',suborder:'suborders',
+  superfamily:'superfamilies',family:'families',subfamily:'subfamilies',tribe:'tribes',genus:'genera',species:'species'}[rank]);
+
+/* The title and the two credit lines, for exports. The title is what the reader typed into the
+   heading (or the default); a credit line is included only when it has been filled. */
+function userTitle(){ const e=el('#usertitle'); return e?e.innerText.replace(/\s+/g,' ').trim():''; }
+function creditLines(){ const out=[]; [['#credContrib','Data contributors: '],['#credSource','Data source: ']].forEach(([id,lab])=>{
+  const v=(el(id)?el(id).innerText:'').replace(/\s+/g,' ').trim(); if(v) out.push(lab+v); }); return out; }
+function syncCredits(){ document.querySelectorAll('.credval').forEach(v=>v.closest('.credline').classList.toggle('empty',!v.innerText.trim())); }
+/* The multi-section indices report starts with the title and any credit lines, each marked "#".
+   Flat CSVs (incidence matrix, unique taxa, name check) start with their header row. The
+   loaders skip leading "#" lines, so a report loads back too. */
+function csvPreamble(){ const q=s=>/[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+ return [userTitle(),...creditLines()].filter(Boolean).map(t=>q('# '+t)).join('\n')+'\n'; }
+/* The same head on every PNG: the title, wrapped to the figure's width, then the credit lines. */
+function headLayout(probe,innerW){ const t=userTitle(), cr=creditLines(); probe.font='600 19px Georgia, "Iowan Old Style", serif';
+ const lines=[]; let cur='';
+ t.split(' ').forEach(w=>{ const tryL=cur?cur+' '+w:w; if(cur&&probe.measureText(tryL).width>innerW){ lines.push(cur); cur=w; } else cur=tryL; });
+ if(cur) lines.push(cur);
+ return {lines,cr,h:lines.length*25+cr.length*16+((lines.length||cr.length)?14:0)}; }
+function paintHead(x,EH,pad,y0){ let y=y0; x.textBaseline='alphabetic';
+ x.font='600 19px Georgia, "Iowan Old Style", serif'; x.fillStyle='#23211c'; EH.lines.forEach(l=>{ x.fillText(l,pad,y+19); y+=25; });
+ x.font='11px Consolas, "SFMono-Regular", monospace'; x.fillStyle='#5b5852'; EH.cr.forEach(l=>{ x.fillText(l,pad,y+11); y+=16; }); }
+function download(name,csv){
+ const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');
+ a.href=URL.createObjectURL(b);a.download=name;a.click();
+}
+
+/* ---------------- rank selector: only ranks the files actually supply ---------------- */
+function renderRanks(){
+ const avail=new Set(); LIB.forEach(e=>e.have.forEach(r=>avail.add(r)));
+ if(!avail.has(rank)) rank = RANKS.filter(r=>avail.has(r)).pop() || 'species';
+ el('#segRank').innerHTML = RANKS.map(r=>
+  `<button data-r="${r}" aria-pressed="${r===rank}" ${avail.has(r)?'':'disabled'}>${rankNoun.call(null,r)||r}</button>`
+ ).join('');
+ el('#segRank').querySelectorAll('button').forEach(b=>{
+  b.textContent=RANK_TITLE[b.dataset.r];
+  b.onclick=()=>{ if(b.disabled) return; rank=b.dataset.r; renderAll(); };
+ });
+}
+
+/* ---------------- the incidence matrix: the structure everything else derives from ---- */
+function buildMatrix(){
+ const taxa=new Set(); LIB.forEach(e=>setOf(e).forEach(t=>taxa.add(t)));
+ const list=[...taxa].sort();
+ return {taxa:list, cells:list.map(t=>LIB.map(e=>setOf(e).has(t)?1:0))};
+}
+function renderMatrix(){
+ const host=el('#matrix'); if(LIB.length<1){host.innerHTML='';return;}
+ const m=buildMatrix();
+ const shown=m.taxa.slice(0,40);
+ let h='<h2>Incidence matrix</h2><p class="sect">Taxa as rows, checklists as columns, presence as 1. '+
+  'This is the structure the indices are calculated from, and the standard input for further analysis '+
+  'in R or PAST. '+m.taxa.length.toLocaleString()+' '+rankNoun()+' across '+LIB.length+' checklists'+
+  (m.taxa.length>40?'; the first 40 are shown.':'.')+'</p><div class="scroll"><table class="mtx">'+
+  '<tr><th class="name">'+rankNoun().replace(/^./,c=>c.toUpperCase())+'</th>'+
+  LIB.map(e=>`<th class="lab">${labHead(e)}</th>`).join('')+'<th>lists</th></tr>';
+ shown.forEach((t,i)=>{
+  const row=m.cells[m.taxa.indexOf(t)];
+  h+=`<tr><td class="name"><i>${esc(dispName(t))}</i></td>`+
+     row.map(v=>`<td class="${v?'one':'zero'}">${v}</td>`).join('')+
+     `<td>${row.reduce((x,y)=>x+y,0)}</td></tr>`;
+ });
+ h+='</table></div><button class="btn ghost" id="mtxCsv">Download full matrix</button>';
+ host.innerHTML=h;
+ el('#mtxCsv').onclick=()=>{
+  let csv=rankNoun()+','+LIB.map(e=>'"'+e.name+'"').join(',')+',n_lists\n';
+  m.taxa.forEach((t,i)=>{ const r=m.cells[i];
+   csv+='"'+dispName(t).replace(/"/g,'""')+'",'+r.join(',')+','+r.reduce((x,y)=>x+y,0)+'\n'; });
+  download('incidence_matrix_'+rank+'.csv',csv);
+ };
+}
+
+/* ---------------- name checking ---------------- */
+function pattern(a,b){
+ const ea=a.split(' ').slice(1).join(' '), eb=b.split(' ').slice(1).join(' ');
+ if(!ea||!eb) return null;
+ const [x,y]=[ea,eb].sort((p,q)=>p.length-q.length);
+ for(let i=1;i<y.length;i++) if(y.slice(0,i)+y.slice(i+1)===x && y[i]===y[i-1]) return 'doubled letter';
+ if(ea.replace(/ae/g,'e')===eb.replace(/ae/g,'e')) return 'ae / e';
+ if(ea.replace(/j/g,'i')===eb.replace(/j/g,'i')) return 'i / j';
+ if(ea.replace(/y/g,'i')===eb.replace(/y/g,'i')) return 'y / i';
+ if(ea.length===eb.length&&ea.slice(0,-1)===eb.slice(0,-1)&&'eiasm'.includes(ea.slice(-1))&&'eiasm'.includes(eb.slice(-1)))
+  return 'termination';
+ return null;
+}
+function nameChecks(){
+ const owner=new Map();
+ LIB.forEach((e,i)=>setOf(e).forEach(n=>{ if(!owner.has(n))owner.set(n,new Set()); owner.get(n).add(i); }));
+ const idx=new Map();
+ owner.forEach((_,n)=>{
+  const keys=[n]; for(let i=0;i<n.length;i++) keys.push(n.slice(0,i)+n.slice(i+1));
+  keys.forEach(k=>{ if(!idx.has(k))idx.set(k,new Set()); idx.get(k).add(n); });
+ });
+ const seen=new Set(), out=[];
+ idx.forEach(g=>{ if(g.size<2) return; const a=[...g].sort();
+  for(let i=0;i<a.length;i++) for(let j=i+1;j<a.length;j++){
+   const k=a[i]+'|'+a[j]; if(seen.has(k)) continue; seen.add(k);
+   const x=a[i],y=a[j], two=x.includes(' ')&&y.includes(' ');
+   let tier,why;
+   if(two && x.split(' ')[0]!==y.split(' ')[0]){ tier=3; why='different first word \u2014 usually distinct taxa'; }
+   else { const p=pattern(x,y); if(p){tier=1;why=p;} else {tier=2;why='one letter, meaning may differ';} }
+   const lx=[...owner.get(x)], ly=[...owner.get(y)];
+   out.push({x,y,tier,why,lx,ly,cross:lx.join()!==ly.join()});
+  } });
+ /* A binomial shared between lists but carrying different authorship is not
+    necessarily a shared taxon. That merge inflates 'a' and therefore every index,
+    which is the same damage a misspelling does in reverse — so it is reported
+    alongside them, and first, because it changes a number rather than a name. */
+ if(rank==='species'){
+  const byName=new Map();
+  LIB.forEach((e,i)=>Object.entries(e.authors||{}).forEach(([nm,as])=>{
+   if(!setOf(e).has(nm)) return;
+   if(!byName.has(nm)) byName.set(nm,new Map());
+   byName.get(nm).set(i,as);
+  }));
+  byName.forEach((perList,nm)=>{
+   if(perList.size<2) return;
+   const all=new Set(); perList.forEach(as=>as.forEach(a=>all.add(a)));
+   if(all.size<2) return;
+   const li=[...perList.keys()];
+   out.unshift({x:nm, y:nm, tier:0, cross:true, lx:[li[0]], ly:li.slice(1),
+     why:'same name, different authorship \u2014 '+[...all].join('; ')+' \u2014 may be different taxa'});
+  });
+ }
+ out.sort((p,q)=>(q.cross-p.cross)||(p.tier-q.tier)||p.x.localeCompare(q.x));
+ return out;
+}
+function renderNames(){
+ const host=el('#names'); if(LIB.length<1){host.innerHTML='';return;}
+ const f=nameChecks();
+ if(!f.length){ host.innerHTML='<h2>Name check <span class="h2sub">\u2014 flags look-alike spellings and conflicting authorship; does not validate names</span></h2>'+'<p class="sect ncdef">The name check flags spellings that look alike and names with conflicting authorship. It does not validate names against any taxonomy &mdash; check names first with <a href="https://tnrs.biendata.org/" target="_blank" rel="noopener">TNRS</a> or <a href="https://www.checklistbank.org/" target="_blank" rel="noopener">ChecklistBank</a>.</p>'+'<p class="note">No near-duplicate '+rankNoun()+
+   ' names found across the loaded checklists.</p>'+'<p class="note">Tautonyms (<i>Bison bison</i>) are valid for animals and are counted; the Viewer, for plants, treats them as errors.</p>'; return; }
+ const cross=f.filter(x=>x.cross), within=f.filter(x=>!x.cross);
+ const lab=i=>esc(LIB[i]?LIB[i].name:'?');
+ let h='<h2>Name check <span class="h2sub">\u2014 flags look-alike spellings and conflicting authorship; does not validate names</span></h2>'+'<p class="sect ncdef">The name check flags spellings that look alike and names with conflicting authorship. It does not validate names against any taxonomy &mdash; check names first with <a href="https://tnrs.biendata.org/" target="_blank" rel="noopener">TNRS</a> or <a href="https://www.checklistbank.org/" target="_blank" rel="noopener">ChecklistBank</a>.</p>'+'<p class="sect">A misspelling costs a similarity index twice: it removes a '+
+  'shared taxon and adds a spurious unique one, so two lists look further apart than they are. '+
+  'These are candidates only &mdash; <b>nothing is merged</b>. '+f.length+' pair'+(f.length===1?'':'s')+
+  ' found, '+cross.length+' spanning different checklists and therefore affecting the indices.</p>'+
+  '<div class="scroll"><table><tr><th class="name">Name</th><th class="name">Near-duplicate</th>'+
+  '<th>In</th><th class="name">Why flagged</th></tr>';
+ const row=x=>`<tr class="t${x.tier}${x.cross?' xl':''}"><td class="name"><i>${esc(dispName(x.x))}</i></td>`+
+  `<td class="name"><i>${esc(dispName(x.y))}</i></td><td>${x.lx.map(lab).join('+')} / ${x.ly.map(lab).join('+')}</td>`+
+  `<td class="name">${esc(x.why)}</td></tr>`;
+ if(cross.length){h+='<tr><td colspan="4" class="grp">Across different checklists \u2014 these change the indices</td></tr>';cross.forEach(x=>h+=row(x));}
+ if(within.length){h+='<tr><td colspan="4" class="grp">Within one checklist \u2014 worth checking at source</td></tr>';within.forEach(x=>h+=row(x));}
+ h+='</table></div><p class="note">Shaded rows differ only by orthographic convention and are very likely '+
+    'the same taxon. Unshaded rows differ by one letter in a way that may change the meaning \u2014 '+
+    '<i>Hordeum marinum</i> and <i>H. murinum</i> are both valid species.</p>'+'<p class="note">Tautonyms (<i>Bison bison</i>) are valid for animals and are counted; the Viewer, for plants, treats them as errors.</p>'+
+    '<button class="btn ghost" id="nmCsv">Download name check</button>';
+ host.innerHTML=h;
+ el('#nmCsv').onclick=()=>{
+  let csv='rank,name_a,name_b,lists_a,lists_b,spans_checklists,tier,reason\n';
+  f.forEach(x=>csv+=[rank,'"'+dispName(x.x)+'"','"'+dispName(x.y)+'"','"'+x.lx.map(i=>LIB[i].name).join(';')+'"',
+   '"'+x.ly.map(i=>LIB[i].name).join(';')+'"',x.cross?'yes':'no',x.tier,'"'+x.why+'"'].join(',')+'\n');
+  download('name_check.csv',csv);
+ };
+}
+
+/* ---------------- lists, indices ---------------- */
+function richness(e){ return e.area>0 ? setOf(e).size/(e.area/1000) : null; }
+const fmtR=x=>x===null?'\u2014':(x>=100?x.toFixed(1):x>=1?x.toFixed(2):x.toFixed(4));
+function renderLists(){
+ el('#empty').style.display=LIB.length?'none':'block';
+ const host=el('#lists'); if(!LIB.length){host.innerHTML='';return;}
+ /* Only the ranks some loaded list supplies get a column; the rest would be all dashes. */
+ const PR=RANKS.filter(r=>LIB.some(e=>e.sets[r].size));
+ let h='<h2>Checklists loaded</h2><table><tr><th class="name">Checklist</th>'+
+  PR.map(r=>`<th>${RANK_SHORT[r]}</th>`).join('')+
+  '<th>Records</th><th>Unique<br><span style="font-family:var(--mono);font-size:9px;font-weight:400">'+rankNoun()+'</span></th>'+
+  '<th>Mean similarity<br><span style="font-family:var(--mono);font-size:9px;font-weight:400">Jaccard, to the others</span></th>'+
+  '<th>Area</th><th>Taxon density<br><span style="font-family:var(--mono);font-size:9px;font-weight:400">'+
+  rankNoun()+' / 1000</span></th><th>Observed \u00f7 expected<br><span style="font-family:var(--mono);font-size:9px;font-weight:400">'+fitLabel(rank)+'</span></th><th class="mv">Order</th><th class="act"></th></tr>';
+ LIB.forEach((e,i)=>{
+  h+=`<tr><td class="name"><span class="labedit" contenteditable="true" spellcheck="false" data-i="${i}" title="Click to rename">${esc(e.name)}</span></td>`+
+   PR.map(r=>`<td>${e.sets[r].size?e.sets[r].size.toLocaleString():'\u2014'}</td>`).join('')+
+   `<td>${e.recSum!=null?e.recSum.toLocaleString():'\u2014'}</td>`+
+   `<td>${(STATS.uniq[i]||[]).length.toLocaleString()}</td>`+
+   `<td>${STATS.mean[i]!=null?STATS.mean[i].toFixed(3):'\u2014'}</td>`+
+   `<td><input class="area" data-i="${i}" value="${e.area||''}" placeholder="area"></td>`+
+   `<td class="rich">${fmtR(richness(e))}</td>`+
+   `<td class="oe">${STATS.fit&&STATS.fit.ok&&STATS.fit.oe[i]!=null?STATS.fit.oe[i].toFixed(2):'\u2014'}</td>`+
+   `<td class="mv"><button class="mvb" data-i="${i}" data-d="-1" ${i===0?'disabled':''} title="Move up" aria-label="Move ${esc(e.name)} up">\u25b2</button>`+
+   `<button class="mvb" data-i="${i}" data-d="1" ${i===LIB.length-1?'disabled':''} title="Move down" aria-label="Move ${esc(e.name)} down">\u25bc</button></td>`+
+   `<td class="act"><button class="del" data-i="${i}">\u00d7</button></td></tr>`;
+ });
+ h+='</table>'+fitNoteHTML(STATS.fit||{n:0,ok:false},rankNoun(),rank);
+ h+=LIB.map(e=>`<div class="note"><b>${esc(e.name)}</b> \u2014 ${esc(e.note)}</div>`).join('');
+ host.innerHTML=h;
+ host.querySelectorAll('.area').forEach(inp=>{
+  const apply=()=>{ const i=+inp.dataset.i; LIB[i].area=parseArea(inp.value);
+   const cell=inp.closest('tr').querySelector('.rich');
+   if(cell) cell.textContent=fmtR(richness(LIB[i]));
+   inp.title = LIB[i].area>0 ? 'read as '+LIB[i].area.toLocaleString() : 'no area given'; };
+  inp.oninput=()=>{ apply(); updateFit(); }; inp.onchange=()=>{ apply(); updateFit(); };
+ });
+ host.querySelectorAll('.del').forEach(b=>b.onclick=()=>{LIB.splice(+b.dataset.i,1);renderAll();});
+ /* Renaming: the label is used in every table, the PNG, every export, and area matching.
+    The table is rebuilt after the edit commits, outside the blur event, so the element
+    being edited is never removed while it still has focus. */
+ host.querySelectorAll('.labedit').forEach(sp=>{
+  const i=+sp.dataset.i, before=LIB[i].name;
+  sp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); sp.blur(); } if(e.key==='Escape'){ sp.textContent=before; sp.blur(); } };
+  sp.onblur=()=>{
+   const lab=sp.textContent.replace(/\s+/g,' ').trim();
+   const clash=LIB.some((e,k)=>k!==i && e.name.toLowerCase()===lab.toLowerCase());
+   if(!lab || clash){ sp.textContent=before; if(clash) alert('Another checklist is already labelled "'+lab+'". Labels must be distinct.'); return; }
+   if(lab!==before){ LIB[i].name=lab; LIB[i].short=lab; setTimeout(renderAll,0); }
+  };
+ });
+ /* Reordering changes display order only. Every table, matrix and export iterates LIB,
+    so moving an entry moves it everywhere at once; nothing is recomputed, and the
+    indices are symmetric in the pair, so no value can change. */
+ host.querySelectorAll('.mvb').forEach(b=>b.onclick=()=>{
+  const i=+b.dataset.i, j=i+(+b.dataset.d);
+  if(j<0||j>=LIB.length) return;
+  [LIB[i],LIB[j]]=[LIB[j],LIB[i]]; renderAll();
+  const again=el('#lists').querySelector(`.mvb[data-i="${j}"][data-d="${b.dataset.d}"]`)||el('#lists').querySelector(`.mvb[data-i="${j}"]`);
+  if(again) again.focus();
+ });
+}
+function renderIndices(){
+ const host=el('#out');
+ if(LIB.length<2){ host.innerHTML=LIB.length?'<p class="note">Load a second checklist to compare.</p>':''; return; }
+ let warn='';
+ const empty=LIB.filter(e=>setOf(e).size===0).map(e=>e.name);
+ if(empty.length) warn='<div class="warn">No '+rankNoun()+' could be read for '+empty.map(esc).join(', ')+
+   '. Choose a rank that all the loaded files supply.</div>';
+ const sizes=LIB.map(e=>setOf(e).size).filter(n=>n>0);
+ if(sizes.length>1 && Math.max(...sizes)/Math.min(...sizes)>=5)
+  warn+='<div class="warn">These checklists differ in size by a factor of '+
+   (Math.max(...sizes)/Math.min(...sizes)).toFixed(1)+'. All three indices are sensitive to survey effort, '+
+   'so part of any difference may reflect how completely each area has been recorded rather than its biology.</div>';
+ let h='<h2>Similarity</h2>'+warn;
+ [['Jaccard',jac,'shared / every taxon in either list'],
+  ['S\u00f8rensen',sor,'shared counted twice / the two lists combined'],
+  ['Simpson',sim,'shared / the smaller list \u2014 ignores differences in richness']].forEach(([nm,fn,desc])=>{
+  h+='<div class="mx"><div class="scroll"><table><caption>'+nm+' \u2014 '+desc+' \u2014 on '+rankNoun()+'</caption><tr><th class="name"></th>'+
+     LIB.map(e=>`<th class="lab">${labHead(e)}</th>`).join('')+'</tr>';
+  LIB.forEach((x,i)=>{ h+=`<tr><td class="name">${esc(x.name)}</td>`;
+   LIB.forEach((y,j)=>{ if(i===j){h+='<td class="diag">\u2014</td>';return;}
+    const o=ov(x,y), v=fn(o.a,o.b,o.c);
+    h+=`<td class="${heat(v)}" title="shared ${o.a} \u00b7 only ${esc(x.name)} ${o.b} \u00b7 only ${esc(y.name)} ${o.c}">${v===null?'\u2014':v.toFixed(3)}</td>`; });
+   h+='</tr>'; });
+  h+='</table></div>'+legendHTML()+'</div>';
+ });
+ h+='<div class="scroll noprint"><table><caption>Counts behind the indices, on '+rankNoun()+'</caption>'+
+    '<tr><th class="name">Pair</th><th>shared (a)</th><th>only in first (b)</th><th>only in second (c)</th></tr>';
+ for(let i=0;i<LIB.length;i++) for(let j=i+1;j<LIB.length;j++){ const o=ov(LIB[i],LIB[j]);
+  h+=`<tr><td class="name">${esc(LIB[i].name)} vs ${esc(LIB[j].name)}</td><td>${o.a}</td><td>${o.b}</td><td>${o.c}</td></tr>`; }
+ h+='</table></div><button class="btn ghost" id="idxCsv">Download all indices</button> <button class="btn ghost" id="idxPng">Download matrices (PNG)</button>';
+ host.innerHTML=h;
+ el('#idxPng').onclick=downloadMatricesPNG;
+ el('#idxCsv').onclick=()=>{
+  const keep=rank;
+  let csv='rank,checklist_a,checklist_b,shared_a,only_first_b,only_second_c,jaccard,sorensen,simpson\n';
+  RANKS.forEach(rk=>{ rank=rk;
+   if(!LIB.every(e=>e.sets[rk].size)) return;
+   for(let i=0;i<LIB.length;i++) for(let j=i+1;j<LIB.length;j++){
+    const o=ov(LIB[i],LIB[j]); const q=v=>v===null?'':v.toFixed(4);
+    csv+=[rk,'"'+LIB[i].name+'"','"'+LIB[j].name+'"',o.a,o.b,o.c,
+      q(jac(o.a,o.b,o.c)),q(sor(o.a,o.b,o.c)),q(sim(o.a,o.b,o.c))].join(',')+'\n'; } });
+  csv+='\nchecklist,'+RANKS.join(',')+',area,taxon_density_at_'+keep+',observed_div_expected_at_'+keep+'\n';
+  rank=keep;
+  const F=computeFit();
+  LIB.forEach((e,i)=>{ csv+=['"'+e.name+'"',...RANKS.map(r=>e.sets[r].size),e.area||'',
+    e.area>0?(setOf(e).size/(e.area/1000)).toFixed(4):'', F.ok&&F.oe[i]!=null?F.oe[i].toFixed(4):''].join(',')+'\n'; });
+  csv+='\ntaxon_area_fit,rank,n_checklists,c,z,r2,note\n';
+  csv+=['fit',keep,F.n,F.ok?F.c.toFixed(4):'',F.ok?F.z.toFixed(4):'',F.ok&&F.r2!=null?F.r2.toFixed(4):'',
+        '"'+(F.ok?(F.n<6?'below six regions the fit is illustrative only':'fitted on these checklists only'):'fewer than three checklists with an area')+'"'].join(',')+'\n';
+  download('similarity_indices.csv',csvPreamble()+csv);   /* the multi-section report alone carries the title and credits */
+ };
+}
+
+/* The three index matrices as one PNG, drawn to an offscreen canvas at 2x density with
+   no library. Rows and columns follow LIB, the current display order, so a reordered
+   view exports reordered. Drawing is kept apart from the download so it can be tested. */
+function buildMatricesCanvas(){
+ const n=LIB.length; if(n<2) return null;
+ const S=2, pad=26, rowH=24, titleH=32, gap=24, capH=66+16*3;
+ const F={name:'13px Georgia, "Iowan Old Style", serif', mono:'12px Consolas, "SFMono-Regular", monospace',
+          title:'600 16px Georgia, "Iowan Old Style", serif', note:'11px Consolas, "SFMono-Regular", monospace'};
+ const legendH=40;   /* swatch row + the cut-point sentence, under each matrix */
+ const probe=document.createElement('canvas').getContext('2d');
+ probe.font=F.name; const nameW=Math.ceil(Math.max(...LIB.map(e=>probe.measureText(e.name).width)))+22;
+ /* Column headers carry the full checklist name, not the on-screen short label: a
+    truncated country name is not acceptable on a figure. Long names wrap to two lines
+    at the underscore or space nearest their middle. */
+ probe.font=F.mono;
+ const wrap=nm=>{ if(probe.measureText(nm).width<=150) return [nm];
+   const cuts=[...nm.matchAll(/[_ ]/g)].map(m=>m.index); if(!cuts.length) return [nm];
+   const mid=nm.length/2; const k=cuts.reduce((b,v)=>Math.abs(v-mid)<Math.abs(b-mid)?v:b);
+   return [nm.slice(0,k+1), nm.slice(k+1)]; };
+ const heads=LIB.map(e=>wrap(e.name));
+ const colW=Math.ceil(Math.max(78,...heads.map(ls=>Math.max(...ls.map(l=>probe.measureText(l).width))+20)));
+ const headH=heads.some(ls=>ls.length>1)?40:rowH;
+ const mats=[['Jaccard',jac,'shared / every taxon in either list'],
+             ['S\u00f8rensen',sor,'shared counted twice / the two lists combined'],
+             ['Simpson',sim,'shared / the smaller list \u2014 ignores differences in richness']];
+ const date=new Date().toISOString().slice(0,10);
+ const cap1=`Checklist Comparison ${VERSION} \u00b7 compared at ${rankNoun()} \u00b7 ${n} checklists \u00b7 ${date}`;
+ const cap2='Jaccard a/(a+b+c) \u00b7 S\u00f8rensen 2a/(2a+b+c) \u00b7 Simpson a/min(a+b,a+c)';
+ probe.font=F.note;
+ const legRow=BANDS.reduce((s,t)=>s+22+probe.measureText(t).width+16,0);
+ /* The tree, when it is showing, drawn from the same layout as the screen; computed once. */
+ const TT=(treeShown&&LIB.length>=3)?upgma():null;
+ const TL=TT?treeLayout(TT,treeLabelW(TT)):null;
+ const W=Math.max(nameW+colW*n, Math.ceil(probe.measureText(cap1).width), Math.ceil(probe.measureText(cap2).width), ...authorLinesFig().map(t=>Math.ceil(probe.measureText(t).width)),
+   Math.ceil(probe.measureText(LEGEND_NOTE).width), Math.ceil(legRow), TL?TL.W:0, TL?Math.ceil(probe.measureText(treeNote()).width):0)+pad*2;
+ const matH=titleH+headH+rowH*n+legendH;
+ const treeBlock=TL?(gap+30+TL.H+30):0;
+ const EH=headLayout(probe,W-pad*2);
+ const H=pad+EH.h+mats.length*matH+(mats.length-1)*gap+treeBlock+capH+pad;
+ const cv=document.createElement('canvas'); cv.width=W*S; cv.height=H*S;
+ const x=cv.getContext('2d'); x.scale(S,S);
+ x.fillStyle='#f4f1ea'; x.fillRect(0,0,W,H);
+ const cell=(cx,cy,w,fill)=>{ x.fillStyle=fill; x.fillRect(cx,cy,w,rowH); x.strokeStyle='#d6cfbe'; x.lineWidth=1; x.strokeRect(cx+.5,cy+.5,w,rowH); };
+ paintHead(x,EH,pad,pad);
+ let y=pad+EH.h;
+ for(const [nm,fn,desc] of mats){
+  x.textBaseline='alphabetic';
+  x.font=F.title; x.fillStyle='#23211c'; x.fillText(nm,pad,y+19);
+  const tw=x.measureText(nm).width;
+  x.font=F.note; x.fillStyle='#5b5852'; x.fillText('  \u2014 '+desc+' \u2014 on '+rankNoun(),pad+tw,y+19);
+  let ty=y+titleH;
+  x.textBaseline='middle';
+  const hcell=(cx,w)=>{ x.fillStyle='#efeade'; x.fillRect(cx,ty,w,headH); x.strokeStyle='#d6cfbe'; x.lineWidth=1; x.strokeRect(cx+.5,ty+.5,w,headH); };
+  hcell(pad,nameW);
+  LIB.forEach((e,j)=>{ const cx=pad+nameW+j*colW; hcell(cx,colW);
+    x.font=F.mono; x.fillStyle='#23211c'; x.textAlign='center';
+    const ls=heads[j]; const lh=15; const top=ty+headH/2-(ls.length-1)*lh/2;
+    ls.forEach((l,k)=>x.fillText(l,cx+colW/2,top+k*lh)); x.textAlign='left'; });
+  LIB.forEach((a,i)=>{
+   const ry=ty+headH+rowH*i;
+   cell(pad,ry,nameW,'#fbfaf6'); x.font=F.name; x.fillStyle='#23211c'; x.fillText(a.name,pad+9,ry+rowH/2);
+   LIB.forEach((b,j)=>{
+    const cx=pad+nameW+j*colW;
+    if(i===j){ cell(cx,ry,colW,'#f2eee3'); x.font=F.mono; x.fillStyle='#8a8578'; x.textAlign='center'; x.fillText('\u2014',cx+colW/2,ry+rowH/2); x.textAlign='left'; return; }
+    const o=ov(a,b), v=fn(o.a,o.b,o.c);
+    const bd=band(v);
+    cell(cx,ry,colW,bd<0?'#fbfaf6':SHADE[bd]);
+    x.font=F.mono; x.fillStyle=bd<0?'#23211c':SHADE_INK[bd]; x.textAlign='right';
+    x.fillText(v===null?'\u2014':v.toFixed(3),cx+colW-10,ry+rowH/2); x.textAlign='left';
+   });
+  });
+  /* the legend, exactly as on screen */
+  let lx=pad, ly=ty+headH+rowH*n+12;
+  x.textBaseline='middle'; x.font=F.note;
+  BANDS.forEach((t,b)=>{ x.fillStyle=SHADE[b]; x.fillRect(lx,ly-6,16,12); x.strokeStyle='#c9c1ae'; x.lineWidth=1; x.strokeRect(lx+.5,ly-5.5,16,12);
+    x.fillStyle='#5b5852'; x.fillText(t,lx+22,ly); lx+=22+x.measureText(t).width+16; });
+  x.fillText(LEGEND_NOTE,pad,ly+17);
+  y+=matH+gap;
+ }
+  if(TL){ const ty=pad+EH.h+mats.length*matH+(mats.length-1)*gap+gap; paintTree(x,TL,pad,ty,F); }
+
+ y=H-pad-capH+30;
+ x.strokeStyle='#23211c'; x.lineWidth=1.5; x.beginPath(); x.moveTo(pad,y-10); x.lineTo(W-pad,y-10); x.stroke();
+ x.textBaseline='alphabetic'; x.font=F.note; x.fillStyle='#5b5852';
+ x.fillText(cap1,pad,y+8); x.fillText(cap2,pad,y+24); authorLinesFig().forEach((t,k)=>x.fillText(t,pad,y+40+16*k));
+ return cv;
+}
+/* Draws the tree's title, branches, labels, axis and note at (ox, ty). Shared by both PNGs. */
+function paintTree(x,TL,ox,ty,F){
+ x.textBaseline='alphabetic'; x.font=F.title; x.fillStyle='#23211c'; x.fillText('Tree',ox,ty+19);
+ const tw=x.measureText('Tree').width; x.font=F.note; x.fillStyle='#5b5852';
+ x.fillText('  \u2014 '+LINKAGE_NAME[clusterLink]+' on '+IDX_NAME[clusterIdx]+' at '+rankNoun(),ox+tw,ty+19);
+ const oy=ty+30;
+ paintTreeBody(x,TL,ox,oy,i=>LIB[i].name,F.note,'distance = 1 \u2212 '+IDX_NAME[clusterIdx]);
+ x.font=F.note; x.fillStyle='#5b5852'; x.fillText(treeNote(),ox,oy+TL.H+16);
+}
+/* The tree alone, as a PNG, with the same provenance caption as the matrices. */
+function buildTreeCanvas(){
+ if(!treeShown||LIB.length<3) return null; const T=upgma(); if(!T) return null;
+ const TL=treeLayout(T,treeLabelW(T)); const S=2, pad=26;
+ const F={title:'600 16px Georgia, "Iowan Old Style", serif', note:'11px Consolas, "SFMono-Regular", monospace'};
+ const probe=document.createElement('canvas').getContext('2d'); probe.font=F.note;
+ const date=new Date().toISOString().slice(0,10);
+ const cap=`Checklist Comparison ${VERSION} \u00b7 compared at ${rankNoun()} \u00b7 ${LIB.length} checklists \u00b7 ${date}`;
+ const W=Math.max(TL.W, Math.ceil(probe.measureText(treeNote()).width), Math.ceil(probe.measureText(cap).width), ...authorLinesFig().map(t=>Math.ceil(probe.measureText(t).width)))+pad*2;
+ const EH=headLayout(probe,W-pad*2);
+ const H=pad+EH.h+30+TL.H+30+40+16*3+pad;
+ const cv=document.createElement('canvas'); cv.width=W*S; cv.height=H*S; const x=cv.getContext('2d'); x.scale(S,S);
+ x.fillStyle='#f4f1ea'; x.fillRect(0,0,W,H);
+ paintHead(x,EH,pad,pad);
+ paintTree(x,TL,pad,pad+EH.h,F);
+ const y=H-pad-14; x.strokeStyle='#23211c'; x.lineWidth=1.5; x.beginPath(); x.moveTo(pad,y-62); x.lineTo(W-pad,y-62); x.stroke();
+ x.font=F.note; x.fillStyle='#5b5852'; x.textBaseline='alphabetic'; x.fillText(cap,pad,y+4-48); authorLinesFig().forEach((t,k)=>x.fillText(t,pad,y+4-32+16*k));
+ return cv;
+}
+function downloadTreePNG(){ const cv=buildTreeCanvas(); if(!cv) return;
+ cv.toBlob(bl=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(bl); a.download='tree_'+clusterIdx+'_'+rank+'.png'; a.click(); },'image/png'); }
+/* ---- item 7: every export in one place ---- */
+/* The provenance line printed at the head of the PDF; refreshed on every render and just
+   before printing, so Ctrl+P gives it too. */
+function fillPrintProv(){ const p=el('#printprov'); if(p) p.textContent=LIB.length?`Checklist Comparison ${VERSION} \u00b7 compared at ${rankNoun()} \u00b7 ${LIB.length} checklists: ${LIB.map(e=>e.name).join(', ')} \u00b7 ${new Date().toISOString().slice(0,10)}`:''; }
+window.addEventListener('beforeprint',fillPrintProv);
+function renderDownloads(){
+ const host=el('#downloads'); if(LIB.length<2){ host.innerHTML=''; return; }
+ const treeOK=treeShown&&LIB.length>=3&&!!upgma(), ncOK=!!el('#nmCsv');
+ const b=(id,txt,ok,why)=>`<span class="dlg"><button class="btn ghost" id="${id}" ${ok?'':'disabled'}>${txt}</button>${!ok&&why?`<span class="dlwhy">(${why})</span>`:''}</span>`;
+ host.innerHTML='<div class="dl"><b>Downloads</b> '+
+  b('dlMatPng','Matrices (PNG)',true)+b('dlTreePng','Tree (PNG)',treeOK,treeShown?'needs three checklists':'tree hidden')+
+  b('dlIdx','All indices (CSV)',true)+b('dlInc','Incidence matrix (CSV)',true)+b('dlUniq','Unique taxa (CSV)',true)+
+  b('dlNc','Name check (CSV)',ncOK,'no near-duplicates found')+
+  '<span class="dlnote">Species\u2013area fit: included in All indices (CSV).</span>'+
+  '<button class="btn" id="dlPdf">Whole page (PDF)</button><span class="dlnote">Choose \u2018Save as PDF\u2019 in the print dialog.</span>'+
+  '<div class="dlnote">The incidence-matrix and unique-taxa CSVs give names in the same form (Genus epithet), so they join on the name column.</div></div>';
+ el('#dlMatPng').onclick=downloadMatricesPNG; el('#dlTreePng').onclick=downloadTreePNG;
+ el('#dlIdx').onclick=()=>{ const t=el('#idxCsv'); if(t) t.click(); };
+ el('#dlInc').onclick=()=>{ const t=el('#mtxCsv'); if(t) t.click(); };
+ el('#dlUniq').onclick=()=>{ const t=el('#uniqCsv'); if(t) t.click(); };
+ el('#dlNc').onclick=()=>{ const t=el('#nmCsv'); if(t) t.click(); };
+ el('#dlPdf').onclick=()=>{ fillPrintProv(); window.print(); };
+ fillPrintProv();
+}
+function downloadMatricesPNG(){
+ const cv=buildMatricesCanvas(); if(!cv) return;
+ cv.toBlob(bl=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(bl);
+  a.download='similarity_matrices_'+rank+'.png'; a.click(); },'image/png');
+}
+
+/* A column header carries the whole label. Long labels may wrap at an underscore or
+   space; they are never cut short, because two cut labels can look identical. */
+function labHead(e){ return esc(e.name).replace(/_/g,'_<wbr>'); }
+/* An areas file: two columns, a label and an area. Matched on the current label,
+   ignoring case and a trailing ".csv". The boxes are filled but stay editable. */
+function normLab(s){ return String(s==null?'':s).trim().toLowerCase().replace(/\.csv$/,''); }
+function applyAreas(text){
+ const note=el('#areaNote');
+ const lines=text.split(/\r?\n/).filter(x=>x.trim());
+ while(lines.length&&/^\s*"?#/.test(lines[0])) lines.shift();
+ if(!LIB.length){ note.textContent='Load your checklists first: areas are matched to their labels.'; return; }
+ if(lines.length<2){ note.textContent='The areas file has no rows.'; return; }
+ const d=sniffDelim(lines[0]);
+ /* Headers and values are trimmed: Excel often leaves spaces inside cells ("region ", " area "). */
+ const head=splitCSV(lines[0],d).map(h=>h.trim().toLowerCase());
+ const LABELS=['label','name','checklist','region','country','code','iso3'];
+ const AREAS=['area','area_km2','area_km\u00b2','km2','km\u00b2','land_area'];
+ const li=head.findIndex(h=>LABELS.includes(h)), ai=head.findIndex(h=>AREAS.includes(h));
+ if(li<0||ai<0){
+  note.textContent=`Found columns: ${head.map(h=>h||'(blank)').join(', ')}. Expected a label column (${LABELS.join(', ')}) and an area column (${AREAS.join(', ')}).`;
+  return; }
+ const map=new Map();
+ for(let k=1;k<lines.length;k++){
+  const c2=splitCSV(lines[k],d).map(v=>v.trim()); const raw=c2[li]||'';
+  /* An unquoted 1,001,450 in a comma file arrives as three cells. When the area is the last
+     column, the extra cells can only be its thousands, so they are joined back. */
+  const aval=(ai===head.length-1 && c2.length>head.length)? c2.slice(ai).join(',') : c2[ai];
+  const a=parseArea(aval); if(raw && a>0) map.set(normLab(raw),{a,raw}); }
+ const used=new Set(), miss=[];
+ LIB.forEach(e=>{ const key=normLab(e.name); if(map.has(key)){ e.area=map.get(key).a; used.add(key); } else miss.push(e.name); });
+ const spare=[...map.entries()].filter(([k])=>!used.has(k)).map(([,v])=>v.raw);
+ let msg=`Areas read for ${LIB.length-miss.length} of ${LIB.length} checklist${LIB.length===1?'':'s'}`;
+ if(miss.length) msg+=`; no match for: ${miss.join(', ')}`;
+ if(spare.length) msg+=`. ${spare.length} row${spare.length===1?'':'s'} in the areas file matched no checklist: ${spare.join(', ')}`;
+ note.textContent=msg+'.';
+ renderAll();
+}
+/* Adapter onto the shared taxon-area fit: one item per checklist, taxa at this rank and area. */
+function computeFit(){ return speciesAreaFit(LIB.map(e=>({S:setOf(e).size,A:e.area||0}))); }
+/* Typing an area updates the fit and the Observed \u00f7 expected column in place: rebuilding
+   the table would take focus away from the box being typed in. */
+function updateFit(){
+ STATS.fit=computeFit();
+ document.querySelectorAll('#lists td.oe').forEach((td,i)=>{ const v=STATS.fit.ok?STATS.fit.oe[i]:null; td.textContent=v==null?'\u2014':v.toFixed(2); });
+ const fn=el('#fitnote'); if(fn) fn.outerHTML=fitNoteHTML(STATS.fit,rankNoun(),rank);
+}
+function rankStats(){
+ const cnt=new Map();
+ LIB.forEach(e=>setOf(e).forEach(t=>cnt.set(t,(cnt.get(t)||0)+1)));
+ const uniq=LIB.map(e=>[...setOf(e)].filter(t=>cnt.get(t)===1).sort());
+ const mean=LIB.map((x,i)=>{ let s=0,n=0; LIB.forEach((y,j)=>{ if(i===j) return; const o=ov(x,y), v=jac(o.a,o.b,o.c); if(v!==null){ s+=v; n++; } }); return n?s/n:null; });
+ return {cnt,uniq,mean,fit:null};
+}
+function renderHighlights(){
+ const host=el('#highlights'); if(LIB.length<2){ host.innerHTML=''; return; }
+ const noun=rankNoun(), sizes=LIB.map(e=>setOf(e).size);
+ const who=v=>LIB.filter((e,i)=>sizes[i]===v).map(e=>`<b>${esc(e.name)}</b>`).join(', ');
+ const mx=Math.max(...sizes), mn=Math.min(...sizes);
+ let best=[], worst=[];
+ for(let i=0;i<LIB.length;i++) for(let j=i+1;j<LIB.length;j++){
+  const o=ov(LIB[i],LIB[j]), v=jac(o.a,o.b,o.c); if(v===null) continue;
+  const r=Math.round(v*1000)/1000;
+  if(!best.length||r>best[0].r) best=[{i,j,r}]; else if(r===best[0].r) best.push({i,j,r});
+  if(!worst.length||r<worst[0].r) worst=[{i,j,r}]; else if(r===worst[0].r) worst.push({i,j,r});
+ }
+ const pair=p=>`<b>${esc(LIB[p.i].name)}</b> \u2013 <b>${esc(LIB[p.j].name)}</b>`;
+ /* A tie is listed in full on request: "and 14 other pairs" opens the list, a second click closes it. */
+ let tieN=0; const tieLists=[];
+ const more=a=>{ if(a.length<2) return ''; const id='tie'+(tieN++);
+   tieLists.push(`<div class="tielist" id="${id}" hidden>${a.map(p=>`${esc(LIB[p.i].name)} \u2013 ${esc(LIB[p.j].name)}`).join(' \u00b7 ')}</div>`);
+   return ` (<span class="tietoggle" role="button" tabindex="0" data-t="${id}">and ${a.length-1} other pair${a.length===2?'':'s'} at the same value</span>)`; };
+ const L=[];
+ L.push(`Most taxa: ${who(mx)} (${mx.toLocaleString()} ${noun}) \u00b7 Fewest: ${who(mn)} (${mn.toLocaleString()})`);
+ if(best.length) L.push(`Most alike: ${pair(best[0])}, Jaccard ${best[0].r.toFixed(3)}${more(best)} \u00b7 Least alike: ${pair(worst[0])}, ${worst[0].r.toFixed(3)}${more(worst)}`);
+ const withRec=LIB.map((e,i)=>({e,i})).filter(x=>x.e.recSum!=null);
+ if(withRec.length>=2){
+  const lo=Math.min(...withRec.map(x=>x.e.recSum));
+  const names=withRec.filter(x=>x.e.recSum===lo).map(x=>`<b>${esc(x.e.name)}</b>`).join(', ');
+  L.push(`<span class="warnline">Fewest records: ${names} (${lo.toLocaleString()}) \u2014 low similarity for this checklist may reflect collecting effort rather than the fauna or flora</span>`);
+ }
+ const freq=new Map(); STATS.cnt.forEach(k=>freq.set(k,(freq.get(k)||0)+1));
+ const ks=[...freq.keys()].sort((a,b)=>a-b);
+ /* Mary, 13 Oct: lead with the total. The total is the number of distinct taxa at this rank
+    across every loaded checklist: the incidence matrix's row count, and the sum of the parts. */
+ const total=[...freq.values()].reduce((s,v)=>s+v,0);
+ const parts=ks.map((k,n)=>{ const v=freq.get(k), vs=v.toLocaleString();
+   return n===0? `${vs} ${v===1?'is':'are'} present in ${k===1?'only 1 checklist':k+' checklists'}` : `${vs} in ${k}`; });
+ L.push(`Total ${noun} across all checklists: ${total.toLocaleString()}. Of these, ${parts.join(', ')}.`);
+ host.innerHTML=`<div class="hl">${L.join('<br>')}${tieLists.join('')}</div><button class="btn ghost" id="uniqCsv">Download unique taxa (CSV)</button>`;
+ host.querySelectorAll('.tietoggle').forEach(t=>{ const go=()=>{ const d=el('#'+t.dataset.t); d.hidden=!d.hidden; };
+   t.onclick=go; t.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } }; });
+ el('#uniqCsv').onclick=()=>{
+  let csv='rank,taxon,checklist\n';
+  LIB.forEach((e,i)=>STATS.uniq[i].forEach(t=>{ csv+=[rank,'"'+dispName(t).replace(/"/g,'""')+'"','"'+e.name.replace(/"/g,'""')+'"'].join(',')+'\n'; }));
+  download('unique_taxa_'+rank+'.csv',csv);
+ };
+}
+/* ---------------- Hierarchical clustering: UPGMA (average linkage) on d = 1 - index ----------------
+   The standard method for grouping lists by the taxa they share. Lists with no taxa at the
+   current rank are left out of the tree and kept at the end when reordering.
+   Ties are broken by display order, and within each join the group listed first is drawn
+   first, so the same data always gives the same tree and "Order by similarity" is idempotent. */
+let clusterIdx='jaccard', clusterLink='average', treeShown=true;
+const IDX_FN={jaccard:jac,sorensen:sor,simpson:sim}, IDX_NAME={jaccard:'Jaccard',sorensen:'S\u00f8rensen',simpson:'Simpson'};
+function upgma(){
+ /* Adapter onto the shared clustering block: lists with taxa at this rank, distance 1 - index. */
+ const fn=IDX_FN[clusterIdx];
+ const L=LIB.map((e,i)=>i).filter(i=>setOf(LIB[i]).size>0);
+ const left=LIB.map((e,i)=>i).filter(i=>setOf(LIB[i]).size===0);
+ if(L.length<3) return null;
+ const root=clusterAgglomerate(L,(a,b)=>{ const o=ov(LIB[a],LIB[b]), v=fn(o.a,o.b,o.c); return v===null?1:1-v; },clusterLink);
+ return {root,left};
+}
+function treeNote(){ return `Clustered on ${IDX_NAME[clusterIdx]} at ${rankNoun()} by ${LINKAGE_NAME[clusterLink]}; the tree reflects recorded similarity, which depends on collecting effort as well as on the fauna or flora.`; }
+function treeLabelW(T){ const p=document.createElement('canvas').getContext('2d'); p.font='12px Consolas, "SFMono-Regular", monospace';
+ return Math.ceil(Math.max(...leafOrder(T.root).map(i=>p.measureText(LIB[i].name).width)))+8; }
+function renderTree(){
+ const host=el('#tree'); if(LIB.length<3){ host.innerHTML=''; return; }
+ const T=upgma();
+ let h='<h2>Tree</h2><div class="bar treebar"><span class="lbl">Cluster on</span><div class="seg" id="segIdx">'+
+  ['jaccard','sorensen','simpson'].map(k=>`<button data-k="${k}" aria-pressed="${k===clusterIdx}">${IDX_NAME[k]}</button>`).join('')+'</div>'+
+  '<span class="lbl">Linkage</span><div class="seg" id="segLink">'+
+  [['single','Nearest neighbour'],['average','UPGMA'],['complete','Furthest neighbour']].map(([k,t])=>`<button data-l="${k}" aria-pressed="${k===clusterLink}">${t}</button>`).join('')+'</div>'+
+  `<button class="btn" id="orderSim" ${T?'':'disabled'}>Order by similarity</button>`+
+  `<button class="btn ghost" id="treeToggle">${treeShown?'Hide tree':'Show tree'}</button></div>`+
+  `<p class="note linkhelp">${LINKAGE_HELP}</p>`;
+ if(!T) h+=`<p class="note">A tree needs at least three checklists with ${rankNoun()}.</p>`;
+ else if(treeShown){
+  const Lt=treeLayout(T,treeLabelW(T));
+  h+=`<p class="method"><b>Method:</b> ${LINKAGE_NAME[clusterLink]}, on ${IDX_NAME[clusterIdx]} at ${rankNoun()}</p>`+
+     `<div class="scroll">${treeSVG(Lt,i=>LIB[i].name,'distance = 1 \u2212 '+IDX_NAME[clusterIdx])}</div>`+
+     `<p class="note">${treeNote()} Branch height is the distance at which two groups join (1 \u2212 ${IDX_NAME[clusterIdx]}, ${LINKAGE_JOIN[clusterLink]}). `+
+     `Hierarchical clustering is the standard method for grouping lists by the taxa they share.</p>`+
+     (T.left.length?`<p class="note">Left out of the tree, with no ${rankNoun()} at this rank: ${T.left.map(i=>esc(LIB[i].name)).join(', ')}.</p>`:'');
+ }
+ host.innerHTML=h;
+ host.querySelectorAll('#segIdx button').forEach(b=>b.onclick=()=>{ clusterIdx=b.dataset.k; renderTree(); renderDownloads(); });
+ host.querySelectorAll('#segLink button').forEach(b=>b.onclick=()=>{ clusterLink=b.dataset.l; renderTree(); renderDownloads(); });
+ const os=el('#orderSim'); if(os) os.onclick=()=>{ const T2=upgma(); if(!T2) return;
+   const ord=[...leafOrder(T2.root),...T2.left].map(i=>LIB[i]); LIB.length=0; LIB.push(...ord); renderAll(); };
+ el('#treeToggle').onclick=()=>{ treeShown=!treeShown; renderTree(); renderDownloads(); };
+}
+function renderAll(){ renderRanks(); STATS=rankStats(); STATS.fit=computeFit(); renderLists(); renderHighlights(); renderTree(); renderIndices(); renderNames(); renderMatrix(); renderDownloads(); }
+
+/* ---------------- loading ---------------- */
+el('#add').onclick=()=>el('#file').click();
+el('#clear').onclick=()=>{LIB.length=0; el('#areaNote').textContent=''; el('#credContrib').textContent=''; el('#credSource').textContent=''; syncCredits(); renderAll();};
+el('#addArea').onclick=()=>el('#areaFile').click();
+el('#areaFile').onchange=ev=>{ const f=ev.target.files[0]; if(!f) return; const rd=new FileReader();
+ rd.onload=()=>{ let t; try{ t=new TextDecoder('utf-8',{fatal:true}).decode(rd.result); }catch(e){ t=new TextDecoder('windows-1252').decode(rd.result); }
+  applyAreas(t); ev.target.value=''; };
+ rd.readAsArrayBuffer(f); };
+el('#file').onchange=ev=>{
+ const files=[...ev.target.files]; if(!files.length) return;
+ /* Files are read in parallel but added in the order they were selected. Adding them as
+    each finished reading gave a different order on every run. */
+ const slot=new Array(files.length); let pending=files.length;
+ const done=()=>{ if(--pending>0) return;
+  slot.forEach(r=>{ if(r){ r.name=uniqueLabel(r.name); r.short=r.name; LIB.push(r); } });
+  ev.target.value=''; renderAll(); };
+ files.forEach((f,k)=>{
+  const rd=new FileReader();
+  rd.onload=()=>{
+   try{
+    let text;
+    /* Checklists are routinely saved from Excel as Windows-1252, where the hybrid sign
+       and non-breaking space are single bytes that are not valid UTF-8. */
+    try{ text=new TextDecoder('utf-8',{fatal:true}).decode(rd.result); }
+    catch(e){ text=new TextDecoder('windows-1252').decode(rd.result); window.__enc=true; }
+    const r=parseChecklist(text,f.name.replace(/\.(csv|tsv|txt)$/i,''));
+    if(r && r.have.length) slot[k]=r;
+    /* Two different reasons for refusing a file, and the message must give the right one:
+       an empty checklist (Bahrain, all of whose records were excluded) has good columns. */
+    else if(r && r.ncols) alert(f.name+' has the right columns but no records, so there is nothing to compare. It was not added.');
+    else alert('No taxon columns recognised in '+f.name+'. It needs a column of names \u2014 species, genus, family, order, class or phylum.');
+   }catch(err){ alert('Could not read '+f.name+': '+err.message); }
+   done();
+  };
+  rd.onerror=()=>{ alert('Could not read '+f.name+'.'); done(); };
+  rd.readAsArrayBuffer(f);
+ });
+};
+/* Labels must stay distinct: two identical labels would make two matrix rows look the same. */
+function uniqueLabel(base){ let lab=base, n=2; const has=l=>LIB.some(e=>e.name.toLowerCase()===l.toLowerCase());
+ while(has(lab)) lab=base+' ('+(n++)+')'; return lab; }
+el('#ver').textContent=' \u00b7 Checklist Comparison '+VERSION;
+el('#authorline').innerHTML=authorLineHTML();
+el('#usertitle').addEventListener('input',()=>{ const t=userTitle(); if(t) document.title=t; });
+document.querySelectorAll('.credval').forEach(v=>{ v.addEventListener('input',syncCredits);
+ v.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); v.blur(); } }); });
+window.addEventListener('beforeprint',()=>{ const t=userTitle(); if(t) document.title=t; syncCredits(); });
+syncCredits();
+renderAll();
+</script></body></html>

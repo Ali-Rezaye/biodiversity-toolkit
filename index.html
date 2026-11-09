@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Biodiversity Toolkit</title>
+<meta name="description" content="Biodiversity Toolkit: free tools for working with biodiversity data, learning its vocabulary and doing better research. Each tool is one file; most run offline.">
+<link rel="stylesheet" href="style.css">
+<script>
+/* Day/night switch. Applies a stored choice before the page is drawn, then wires the button.
+   Same script on every page. */
+(function () {
+  var KEY = 'biodiversity-toolkit-theme', root = document.documentElement;
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  } catch (e) {}
+  var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    return t ? t === 'dark' : !!(media && media.matches);
+  }
+  function label(btn) {
+    var dark = isDark(), text = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    btn.textContent = dark ? '\u2600\uFE0E' : '\u263E';
+    btn.setAttribute('aria-label', text);
+    btn.title = text;
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.querySelector('.theme-toggle');
+    if (!btn) return;
+    label(btn);
+    btn.hidden = false;
+    btn.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      label(btn);
+    });
+    if (media && media.addEventListener) media.addEventListener('change', function () { label(btn); });
+  });
+})();
+</script>
+<script>
+/* Visit counting (GoatCounter), download log and update-notice sign-up. Same script on every page.
+   Both addresses are set with scripts/update-site.mjs. While one is still a placeholder, that part
+   stays off: nothing is loaded, nothing is sent and no dialog is shown. Nothing runs when the site
+   is opened from a local folder. Downloads never wait for any of this. */
+(function () {
+  var COUNTER = 'https://GOATCOUNTER-CODE.goatcounter.com/count';
+  var LOGGER = 'APPS-SCRIPT-URL';
+  var web = location.protocol === 'https:' || location.protocol === 'http:';
+  var counterOn = web && /^https:\/\/[a-z0-9-]+\.goatcounter\.com\/count$/.test(COUNTER);
+  var loggerOn = web && /^https:\/\/script\.google\.com\/\S+\/exec$/.test(LOGGER);
+  if (counterOn) {
+    var gc = document.createElement('script');
+    gc.async = true;
+    gc.src = 'https://gc.zgo.at/count.js';
+    gc.setAttribute('data-goatcounter', COUNTER);
+    document.head.appendChild(gc);
+  }
+  if (!counterOn && !loggerOn) return;
+
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function put(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function send(data) {
+    try { fetch(LOGGER, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) }).catch(function () {}); } catch (e) {}
+  }
+  function count(path, title) {
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: path, title: title, event: true }); } catch (e) {}
+  }
+
+  var asked = false;
+  function askForNotices(tool, version) {
+    if (asked || get('biodiversity-toolkit-notices')) return;
+    var d = document.createElement('dialog');
+    if (typeof d.showModal !== 'function') return;
+    asked = true;
+    d.className = 'notice';
+    d.setAttribute('aria-labelledby', 'notice-title');
+    d.setAttribute('aria-describedby', 'notice-text');
+    d.innerHTML =
+      '<form novalidate>' +
+      '<h2 id="notice-title">Would you like update notices?</h2>' +
+      '<p id="notice-text">Leave your email and we will write only about new versions, bug fixes and important changes \u2014 nothing else. Your address is kept in a private list held by the authors; write to mary.barkworth@usu.edu to be removed.</p>' +
+      '<label for="notice-email">Email address</label>' +
+      '<input id="notice-email" type="email" autocomplete="email">' +
+      '<p class="notice-note" aria-live="polite"></p>' +
+      '<div class="actions"><button type="submit" class="btn btn-open">Send</button>' +
+      '<button type="button" class="btn btn-download notice-no">No thanks</button></div>' +
+      '</form>';
+    document.body.appendChild(d);
+    var form = d.querySelector('form'), input = d.querySelector('input'), note = d.querySelector('.notice-note');
+    d.addEventListener('close', function () { put('biodiversity-toolkit-notices', 'answered'); d.remove(); });
+    d.querySelector('.notice-no').addEventListener('click', function () { d.close(); });
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var email = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        note.textContent = 'Please check the address: it should look like name@example.org.';
+        input.focus();
+        return;
+      }
+      send({ email: email, tool: tool, version: version, page: location.pathname });
+      form.innerHTML = '<p class="notice-thanks" role="status">Thank you</p>';
+      setTimeout(function () { if (d.open) d.close(); }, 2000);
+    });
+    d.showModal();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var links = document.querySelectorAll('a[data-tool]');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function () {
+        var tool = this.getAttribute('data-tool'), version = this.getAttribute('data-version');
+        var download = this.hasAttribute('download');
+        if (counterOn) count((download ? 'download-' : 'open-') + tool, (download ? 'Download ' : 'Open ') + tool + ' ' + version);
+        if (!download || !loggerOn) return;
+        send({ tool: tool, version: version, action: 'download', page: location.pathname });
+        askForNotices(tool, version);
+      });
+    }
+  });
+})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap site-bar">
+    <a class="site-name" href="index.html">Biodiversity Toolkit</a>
+    <nav class="site-nav" aria-label="Site">
+      <ul>
+        <li><a href="index.html" aria-current="page">Home</a></li>
+        <li><a href="comparer.html">Comparer</a></li>
+        <li><a href="viewer.html">Viewer</a></li>
+        <li><a href="cleaner.html">Cleaner</a></li>
+        <li><a href="cite.html">Cite</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="theme-item"><button type="button" class="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode" hidden>☾</button></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+<h1>Biodiversity Toolkit</h1>
+<p class="lede">Free tools for people who work with biodiversity data: some for working with the data that biodiversity studies produce, some for learning the vocabulary those studies use, and some for doing the research better. Each tool is one file that opens in your browser; most run offline, and nothing you load is sent anywhere.</p>
+
+<div class="labels">
+  <article class="label">
+    <h2><a href="comparer.html">Checklist Comparer</a></h2>
+    <p>Calculates the similarity of two or more lists of taxa from any taxonomic group based on the taxa they include. It enables use of three similarity indices and presents the results as similarity matrices and cluster diagrams that group the lists using three algorithms. Viewing results from different combinations of indices and algorithms is quick and easy.</p>
+    <dl class="fields">
+      <div><dt>For</dt><dd>Checklists of any group of organisms</dd></div>
+      <div><dt>Runs</dt><dd>Offline, in your browser</dd></div>
+      <div><dt>File</dt><dd>One HTML file, <span data-size="comparer">about 90&nbsp;KB</span></dd></div>
+    </dl>
+    <div class="actions">
+    <a class="btn btn-open" href="tools/Checklist_comparison_tool-v1_16.html" data-tool="comparer" data-version="v1.16">Open in browser</a>
+    <a class="btn btn-download" href="tools/Checklist_comparison_tool-v1_16.html" download data-tool="comparer" data-version="v1.16">Download the file</a>
+  </div>
+    <p class="more"><a href="comparer.html">How to use the comparer</a></p>
+  </article>
+
+  <article class="label">
+    <h2><a href="viewer.html">Phylogenetic Checklist Viewer</a></h2>
+    <p>Summarizes the families present in a list of plant taxa based on their phylogenetic, not alphabetical, order. Can show which families are not present in a list and, for those that are, the absolute or relative abundance of the orders, families, genera, and species present. It can also compare two or more checklists in the same manner as the Checklist Comparer.</p>
+    <dl class="fields">
+      <div><dt>For</dt><dd>Plant checklists, from mosses to flowering plants</dd></div>
+      <div><dt>Runs</dt><dd>Offline, in your browser</dd></div>
+      <div><dt>File</dt><dd>One HTML file, <span data-size="viewer">about 850&nbsp;KB</span></dd></div>
+    </dl>
+    <div class="actions">
+    <a class="btn btn-open" href="tools/Phylogenetic_checklist_viewer-v49.html" data-tool="viewer" data-version="v49">Open in browser</a>
+    <a class="btn btn-download" href="tools/Phylogenetic_checklist_viewer-v49.html" download data-tool="viewer" data-version="v49">Download the file</a>
+  </div>
+    <p class="more"><a href="viewer.html">How to use the viewer</a></p>
+  </article>
+
+  <article class="label">
+    <h2><a href="cleaner.html">Checklist Cleaner</a></h2>
+    <p>Applies a table of name corrections — synonyms, misspellings, deletions, or a new rank such as subfamily — to any number of checklists at once, merges the records of a synonym into its accepted name, reports every change, and returns the corrected files.</p>
+    <dl class="fields">
+      <div><dt>For</dt><dd>Checklists of any group of organisms</dd></div>
+      <div><dt>Runs</dt><dd>Offline, in your browser</dd></div>
+      <div><dt>File</dt><dd>One HTML file, <span data-size="cleaner">about 60&nbsp;KB</span></dd></div>
+    </dl>
+    <div class="actions">
+    <a class="btn btn-open" href="tools/Checklist_cleaner-v1_1.html" data-tool="cleaner" data-version="v1.1">Open in browser</a>
+    <a class="btn btn-download" href="tools/Checklist_cleaner-v1_1.html" download data-tool="cleaner" data-version="v1.1">Download the file</a>
+  </div>
+    <p class="more"><a href="cleaner.html">How to use the cleaner</a></p>
+  </article>
+</div>
+
+<p class="after-labels small"><strong>Open in browser</strong> runs the tool from this website. <strong>Download the file</strong> saves a copy to your computer; double-click it to open it, with or without internet.</p>
+
+<section>
+  <h2>Why they are built this way</h2>
+  <div class="reasons">
+    <div>
+      <h3>They work offline</h3>
+      <p>Once downloaded, the tools run without an internet connection: in the field, in the herbarium, or where the connection is slow.</p>
+    </div>
+    <div>
+      <h3>Nothing to install</h3>
+      <p>There is no program to install and no account to create. Double-click the file and it opens in your browser.</p>
+    </div>
+    <div>
+      <h3>Nothing is uploaded</h3>
+      <p>Your checklists stay on your computer. The tools read your files inside the browser and send nothing anywhere.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Created by Ali Rezaye and Mary E. Barkworth, Somaliland Biodiversity Foundation. © 2026 Somaliland Biodiversity Foundation. Software under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a>; text, images and documentation under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. <a href="cite.html">How to cite</a>.</p>
+    <p>Contact: <a href="mailto:mary.barkworth@usu.edu">mary.barkworth@usu.edu</a> for problems, suggestions and questions.</p>
+    <p>Developed with assistance from Claude (Anthropic).</p>
+    <p>Last updated <time datetime="2026-11-09">9 November 2026</time>.</p>
+  </div>
+</footer>
+</body>
+</html>

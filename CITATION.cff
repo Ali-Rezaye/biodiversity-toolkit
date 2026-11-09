@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use these tools, please cite them as below."
+type: software
+title: "Biodiversity Toolkit: Checklist Comparer, Phylogenetic Checklist Viewer and Checklist Cleaner"
+version: "viewer-v49-comparer-v1.16-cleaner-v1.1"
+date-released: 2026-11-09
+authors:
+  - family-names: Rezaye
+    given-names: Ali
+    affiliation: "Somaliland Biodiversity Foundation"
+    orcid: "https://orcid.org/0009-0003-3560-4672"
+  - family-names: Barkworth
+    given-names: Mary E.
+    affiliation: "Somaliland Biodiversity Foundation; Utah State University"
+    orcid: "https://orcid.org/0000-0001-9785-1538"
+license: GPL-3.0-or-later
+url: "https://ali-rezaye.github.io/biodiversity-toolkit/"
+repository-code: "https://github.com/Ali-Rezaye/biodiversity-toolkit"
+abstract: >-
+  Offline tools for biodiversity checklists, each a single HTML file that runs in a
+  web browser with nothing installed and nothing uploaded. The Phylogenetic Checklist Viewer
+  arranges a plant checklist in the order of current phylogenetic classifications (APG V for
+  angiosperms, PPG I for ferns and lycophytes, Yang et al. 2022 for gymnosperms, BPG 2024 for
+  bryophytes; 706 families), shows present and absent families and each family's share of
+  the checklist and of world diversity, and compares checklists with three similarity
+  indices. The Checklist Comparer compares checklists of any group of organisms using the
+  ranks in the user's own columns, with Jaccard, Sørensen and Simpson indices, an incidence
+  matrix, UPGMA clustering, a name check that flags look-alike spellings but does not validate names, and a species-area fit. The Checklist Cleaner applies one table of name corrections
+  (synonyms, misspellings, deletions or a new rank) to any number of checklists at once and
+  returns corrected copies with a report of every change. None of the tools validates
+  species names.
+keywords:
+  - biodiversity
+  - checklist
+  - flora
+  - phylogenetic classification
+  - APG V
+  - beta diversity
+  - similarity index
+  - offline tool

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Checklist Comparer | Biodiversity Toolkit</title>
+<meta name="description" content="Checklist Comparer: compare checklists of any group of organisms with Jaccard, Sørensen and Simpson indices, an incidence matrix, a clustering tree and a species–area fit. Runs offline.">
+<link rel="stylesheet" href="style.css">
+<script>
+/* Day/night switch. Applies a stored choice before the page is drawn, then wires the button.
+   Same script on every page. */
+(function () {
+  var KEY = 'biodiversity-toolkit-theme', root = document.documentElement;
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+  } catch (e) {}
+  var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    return t ? t === 'dark' : !!(media && media.matches);
+  }
+  function label(btn) {
+    var dark = isDark(), text = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    btn.textContent = dark ? '\u2600\uFE0E' : '\u263E';
+    btn.setAttribute('aria-label', text);
+    btn.title = text;
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.querySelector('.theme-toggle');
+    if (!btn) return;
+    label(btn);
+    btn.hidden = false;
+    btn.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      label(btn);
+    });
+    if (media && media.addEventListener) media.addEventListener('change', function () { label(btn); });
+  });
+})();
+</script>
+<script>
+/* Visit counting (GoatCounter), download log and update-notice sign-up. Same script on every page.
+   Both addresses are set with scripts/update-site.mjs. While one is still a placeholder, that part
+   stays off: nothing is loaded, nothing is sent and no dialog is shown. Nothing runs when the site
+   is opened from a local folder. Downloads never wait for any of this. */
+(function () {
+  var COUNTER = 'https://GOATCOUNTER-CODE.goatcounter.com/count';
+  var LOGGER = 'APPS-SCRIPT-URL';
+  var web = location.protocol === 'https:' || location.protocol === 'http:';
+  var counterOn = web && /^https:\/\/[a-z0-9-]+\.goatcounter\.com\/count$/.test(COUNTER);
+  var loggerOn = web && /^https:\/\/script\.google\.com\/\S+\/exec$/.test(LOGGER);
+  if (counterOn) {
+    var gc = document.createElement('script');
+    gc.async = true;
+    gc.src = 'https://gc.zgo.at/count.js';
+    gc.setAttribute('data-goatcounter', COUNTER);
+    document.head.appendChild(gc);
+  }
+  if (!counterOn && !loggerOn) return;
+
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function put(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function send(data) {
+    try { fetch(LOGGER, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) }).catch(function () {}); } catch (e) {}
+  }
+  function count(path, title) {
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: path, title: title, event: true }); } catch (e) {}
+  }
+
+  var asked = false;
+  function askForNotices(tool, version) {
+    if (asked || get('biodiversity-toolkit-notices')) return;
+    var d = document.createElement('dialog');
+    if (typeof d.showModal !== 'function') return;
+    asked = true;
+    d.className = 'notice';
+    d.setAttribute('aria-labelledby', 'notice-title');
+    d.setAttribute('aria-describedby', 'notice-text');
+    d.innerHTML =
+      '<form novalidate>' +
+      '<h2 id="notice-title">Would you like update notices?</h2>' +
+      '<p id="notice-text">Leave your email and we will write only about new versions, bug fixes and important changes \u2014 nothing else. Your address is kept in a private list held by the authors; write to mary.barkworth@usu.edu to be removed.</p>' +
+      '<label for="notice-email">Email address</label>' +
+      '<input id="notice-email" type="email" autocomplete="email">' +
+      '<p class="notice-note" aria-live="polite"></p>' +
+      '<div class="actions"><button type="submit" class="btn btn-open">Send</button>' +
+      '<button type="button" class="btn btn-download notice-no">No thanks</button></div>' +
+      '</form>';
+    document.body.appendChild(d);
+    var form = d.querySelector('form'), input = d.querySelector('input'), note = d.querySelector('.notice-note');
+    d.addEventListener('close', function () { put('biodiversity-toolkit-notices', 'answered'); d.remove(); });
+    d.querySelector('.notice-no').addEventListener('click', function () { d.close(); });
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var email = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        note.textContent = 'Please check the address: it should look like name@example.org.';
+        input.focus();
+        return;
+      }
+      send({ email: email, tool: tool, version: version, page: location.pathname });
+      form.innerHTML = '<p class="notice-thanks" role="status">Thank you</p>';
+      setTimeout(function () { if (d.open) d.close(); }, 2000);
+    });
+    d.showModal();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var links = document.querySelectorAll('a[data-tool]');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function () {
+        var tool = this.getAttribute('data-tool'), version = this.getAttribute('data-version');
+        var download = this.hasAttribute('download');
+        if (counterOn) count((download ? 'download-' : 'open-') + tool, (download ? 'Download ' : 'Open ') + tool + ' ' + version);
+        if (!download || !loggerOn) return;
+        send({ tool: tool, version: version, action: 'download', page: location.pathname });
+        askForNotices(tool, version);
+      });
+    }
+  });
+})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap site-bar">
+    <a class="site-name" href="index.html">Biodiversity Toolkit</a>
+    <nav class="site-nav" aria-label="Site">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="comparer.html" aria-current="page">Comparer</a></li>
+        <li><a href="viewer.html">Viewer</a></li>
+        <li><a href="cleaner.html">Cleaner</a></li>
+        <li><a href="cite.html">Cite</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="theme-item"><button type="button" class="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode" hidden>☾</button></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+<div class="page-head">
+  <h1>How to use the Checklist Comparer</h1>
+  <p class="lede">Checklist Comparer needs a checklist of taxa for each source being compared — an area, a habitat, a host — and, if you want taxon density and the species–area fit, the area of each source.</p>
+  <p class="meta">Version <span data-v="comparer">v1.16</span>. One HTML file, <span data-size="comparer">about 90&nbsp;KB</span>. Runs offline in an up-to-date web browser.</p>
+  <div class="actions">
+    <a class="btn btn-open" href="tools/Checklist_comparison_tool-v1_16.html" data-tool="comparer" data-version="v1.16">Open in browser</a>
+    <a class="btn btn-download" href="tools/Checklist_comparison_tool-v1_16.html" download data-tool="comparer" data-version="v1.16">Download the file</a>
+  </div>
+</div>
+
+<figure class="screenshot">
+  <img src="images/comparer-screenshot.png" alt="The Checklist Comparer showing the clustering tree for 15 insect (Hexapoda) checklists">
+  <figcaption>The comparer with several checklists loaded.</figcaption>
+</figure>
+
+<div class="prose">
+<h2 id="steps">Your results in just three steps</h2>
+<ol class="steps">
+  <li><strong>Open the comparer and press “Add checklists…”.</strong> You can select several files at once or add them one by one.</li>
+  <li><strong>Type the size of each area into the Area column, or load an areas file.</strong></li>
+  <li><strong>Choose the taxonomic rank</strong> you want the Checklist Comparer to use in comparing the lists.</li>
+</ol>
+<p>And that is it. The results appear almost immediately — see <a href="#results">The results</a> below. Test it with the sample data (spider checklists for 15 countries around the Red Sea, to be posted here shortly) or <a href="#prepare">prepare your own data</a>.</p>
+
+<h2 id="prepare">Preparing your data</h2>
+<p><strong>To calculate the taxonomic similarity of the sources:</strong> one CSV file for each list. In Excel, choose File, then Save As, then “CSV UTF-8 (comma delimited)”. The file must contain:</p>
+<ul>
+  <li>one or more columns of scientific names;</li>
+  <li>each column headed by the name of the rank it holds: <code>phylum</code>, <code>subphylum</code>, <code>class</code>, <code>order</code>, <code>suborder</code>, <code>superfamily</code>, <code>family</code>, <code>subfamily</code>, <code>tribe</code>, <code>genus</code>, <code>species</code> (the species column may also be headed <code>scientificName</code>, <code>speciesBinomial</code> or <code>acceptedScientificName</code>);</li>
+  <li>the species column must hold the full two-word name — not the second word alone, and not an abbreviated genus;</li>
+  <li>optional: a column headed <code>GBIF_record_count</code> (or <code>record_count</code>) holding the number of records behind each row. It appears in the table as a measure of collecting effort; it is not used in any index.</li>
+</ul>
+<p>A very short checklist:</p>
+<pre><code>order,family,genus,species
+Araneae,Araneidae,Argiope,Argiope trifasciata
+Araneae,Salticidae,Evarcha,Evarcha arcuata
+Araneae,Lycosidae,Pardosa,Pardosa amentata</code></pre>
+<div class="caveat">
+  <p><strong>Caution.</strong> Checklist Comparer uses names exactly as you give them. A misspelled name or a synonym counts as a different taxon from the correctly spelled accepted name. The tool flags spellings that look alike, but both may be correct: <i>Hordeum murinum</i> and <i>Hordeum marinum</i> are two different species.</p>
+  <p>To find misspellings and synonyms, compile your lists into one list and submit it to <a href="https://www.checklistbank.org/">ChecklistBank</a> (any group) or <a href="https://tnrs.biendata.org/">TNRS</a> (plants). The <a href="cleaner.html">Checklist Cleaner</a>, the next tool on this site, then applies the corrections to all your lists in one step.</p>
+</div>
+<p><strong>To calculate taxon density and the species–area fit:</strong> the comparer needs the area covered by each list. Type the areas into the table after loading, or load an areas file: a CSV with a label column holding the list name, as used for the lists, and an area column. Any unit works, as long as every list uses the same unit.</p>
+<p>Then follow the <a href="#steps">three steps above</a>.</p>
+
+<h2>Sampling and size of area</h2>
+<div class="caveat">
+  <p>Similarity and richness depend on how well each area has been surveyed and on relative size. An under-collected area will look less similar to everything else.</p>
+  <p>The richness index allows for area, but the species–area relationship is fitted across the regions loaded, so comparisons between regions that differ greatly in size — Balochistan is 383 times the area of Islamabad Capital Territory — or in collecting intensity should be read with caution.</p>
+  <p>Only compare lists that cover the same groups of organisms.</p>
+</div>
+
+<h2>What it does not do</h2>
+<div class="caveat">
+  <p><strong>It does not validate your names.</strong> The comparer uses names exactly as you give them, so a misspelling or an outdated synonym counts as a different taxon. The name check only flags spellings that look alike; it cannot tell which spelling is right. Check your names first:</p>
+  <ul>
+    <li><a href="https://tnrs.biendata.org/">TNRS</a>, the Taxonomic Name Resolution Service, for plants;</li>
+    <li><a href="https://www.checklistbank.org/">ChecklistBank</a>, run by the Catalogue of Life and GBIF, for any group.</li>
+  </ul>
+</div>
+<p>It does not work out higher ranks. If your file has no <code>order</code> column, the comparer cannot compare at order level; it will not guess the order from a family name.</p>
+
+<h2 id="results">The results</h2>
+<p>As soon as every list has an area, taxon density and the observed ÷ expected value from the species–area fit appear in the table, with an explanation of the fit below it.</p>
+<p>Below the table comes a summary of the lists: the number of records in each; records that lack the lowest rank (a genus without a species, an order without lower ranks); which list has the most and the fewest taxa at the chosen rank; the two lists most alike and the two least alike; the total number of taxa across all lists and how many occur in one list only, in two, and so on; and a download of the taxa found in only one list.</p>
+<p>Then the clustering: it is easy to explore the effect of different similarity indices and different clustering algorithms, and the explanation below the tree reflects the choices made. One combination is shown at a time; each can be saved as a PNG file.</p>
+<p>Then the similarity matrices for the three indices, colour-coded to make patterns clearer. The lists appear in the order they were loaded; change it with the up and down arrows in the first table, or with “Order by similarity”.</p>
+
+<h2>Downloads</h2>
+<p>Every result can be downloaded: all indices, the incidence matrix, the unique taxa and the name check as CSV; the matrices and the tree as PNG; and the whole page as PDF, through your browser’s print window (choose “Save as PDF”).</p>
+
+<h2>Get the comparer</h2>
+<p class="meta">Current version: <span data-v="comparer">v1.16</span>.</p>
+<div class="actions">
+    <a class="btn btn-open" href="tools/Checklist_comparison_tool-v1_16.html" data-tool="comparer" data-version="v1.16">Open in browser</a>
+    <a class="btn btn-download" href="tools/Checklist_comparison_tool-v1_16.html" download data-tool="comparer" data-version="v1.16">Download the file</a>
+  </div>
+<p class="small" style="margin-top:1.25rem">To link to the comparer from a paper or a web page, use <a href="tools/comparer.html">tools/comparer.html</a>. That link always opens the newest version.</p>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Created by Ali Rezaye and Mary E. Barkworth, Somaliland Biodiversity Foundation. © 2026 Somaliland Biodiversity Foundation. Software under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a>; text, images and documentation under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. <a href="cite.html">How to cite</a>.</p>
+    <p>Contact: <a href="mailto:mary.barkworth@usu.edu">mary.barkworth@usu.edu</a> for problems, suggestions and questions.</p>
+    <p>Developed with assistance from Claude (Anthropic).</p>
+    <p>Last updated <time datetime="2026-11-09">9 November 2026</time>.</p>
+  </div>
+</footer>
+</body>
+</html>
