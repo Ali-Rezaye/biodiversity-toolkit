@@ -15,10 +15,11 @@ authors:
     orcid: "https://orcid.org/0000-0001-9785-1538"
 license: GPL-3.0-or-later
 url: "https://ali-rezaye.github.io/biodiversity-toolkit/"
-repository-code: "https://github.com/Ali-Rezaye/biodiversity-toolkit"
+repository-code: "https://github.com/ali-rezaye/biodiversity-toolkit"
 abstract: >-
-  Offline tools for biodiversity checklists, each a single HTML file that runs in a
-  web browser with nothing installed and nothing uploaded. The Phylogenetic Checklist Viewer
+  Free tools for people who work with biodiversity data, each a single HTML file that
+  opens in a web browser; the tools published so far run offline, with nothing installed and
+  nothing uploaded. The Phylogenetic Checklist Viewer
   arranges a plant checklist in the order of current phylogenetic classifications (APG V for
   angiosperms, PPG I for ferns and lycophytes, Yang et al. 2022 for gymnosperms, BPG 2024 for
   bryophytes; 706 families), shows present and absent families and each family's share of

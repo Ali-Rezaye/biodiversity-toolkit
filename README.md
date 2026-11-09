@@ -1,8 +1,10 @@
 # Biodiversity Toolkit
 
-Free tools for working with biodiversity data. Each tool is a single HTML file that
-runs offline in a web browser. There is nothing to install, and nothing is uploaded: your data
-stay on your computer.
+Free tools for people who work with biodiversity data: some for working with the data that
+biodiversity studies produce, some for learning the vocabulary those studies use, and some for
+doing the research better. Each tool is a single HTML file that opens in a web browser. The
+tools published so far run offline, with nothing to install and nothing uploaded: your data stay
+on your computer.
 
 **Website:** https://ali-rezaye.github.io/biodiversity-toolkit/
 
