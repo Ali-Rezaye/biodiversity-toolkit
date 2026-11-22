@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use these tools, please cite them as below."
 type: software
 title: "Biodiversity Toolkit: Checklist Comparer, Phylogenetic Checklist Viewer and Checklist Cleaner"
-version: "viewer-v49-comparer-v1.16-cleaner-v1.1"
-date-released: 2026-11-09
+version: "viewer-v50-comparer-v1.17-cleaner-v1.2"
+date-released: 2026-11-23
 authors:
   - family-names: Rezaye
     given-names: Ali
@@ -19,17 +19,18 @@ repository-code: "https://github.com/ali-rezaye/biodiversity-toolkit"
 abstract: >-
   Free tools for people who work with biodiversity data, each a single HTML file that
   opens in a web browser; the tools published so far run offline, with nothing installed and
-  nothing uploaded. The Phylogenetic Checklist Viewer
+  nothing uploaded. The Checklist Comparer compares checklists of any group of organisms using
+  the ranks in the user's own columns, with Jaccard, Sørensen and Simpson indices, an incidence
+  matrix, clustering by three methods, a name check that flags look-alike spellings but does not
+  validate names, and a taxon-area fit with its plot. The Phylogenetic Checklist Viewer
   arranges a plant checklist in the order of current phylogenetic classifications (APG V for
   angiosperms, PPG I for ferns and lycophytes, Yang et al. 2022 for gymnosperms, BPG 2024 for
   bryophytes; 706 families), shows present and absent families and each family's share of
-  the checklist and of world diversity, and compares checklists with three similarity
-  indices. The Checklist Comparer compares checklists of any group of organisms using the
-  ranks in the user's own columns, with Jaccard, Sørensen and Simpson indices, an incidence
-  matrix, UPGMA clustering, a name check that flags look-alike spellings but does not validate names, and a species-area fit. The Checklist Cleaner applies one table of name corrections
-  (synonyms, misspellings, deletions or a new rank) to any number of checklists at once and
-  returns corrected copies with a report of every change. None of the tools validates
-  species names.
+  the checklist and of world diversity, and compares checklists in the same way as the
+  Checklist Comparer. The Checklist Cleaner applies one table of name corrections
+  (synonyms, misspellings, deletions or a new rank) to any number of checklists at once,
+  returns corrected copies with a report of every change, and gives one list of every name
+  in the files, ready for a name-matching service. None of the tools validates species names.
 keywords:
   - biodiversity
   - checklist

@@ -10,9 +10,9 @@ on your computer.
 
 | Tool | What it does | Current version | Stable link |
 |---|---|---|---|
-| Checklist Comparer | Compares checklists of any group of organisms, using the ranks in the user's own columns. Jaccard, Sørensen and Simpson indices, incidence matrix, UPGMA tree, name check (flags look-alike spellings; does not validate names), species–area fit. | v1.16 | [tools/comparer.html](tools/comparer.html) |
-| Phylogenetic Checklist Viewer | Arranges a *plant* checklist in phylogenetic order (APG V 2026, PPG I 2016, Yang et al. 2022, BPG 2024; 706 families). Shows present and absent families, each family's share of the checklist and of world diversity, and similarity between checklists. Recognises 706 current and 1,323 former family names of extant plants. | v49 | [tools/viewer.html](tools/viewer.html) |
-| Checklist Cleaner | Applies one table of name corrections (synonyms, misspellings, deletions, or a new rank such as subfamily) to any number of checklists at once, merges the records of a synonym into its accepted name, reports every change and returns corrected copies. | v1.1 | [tools/cleaner.html](tools/cleaner.html) |
+| Checklist Comparer | Compares checklists of any group of organisms, using the ranks in the user's own columns. Jaccard, Sørensen and Simpson indices, incidence matrix, UPGMA tree, name check (flags look-alike spellings; does not validate names), taxon–area fit and plot. | v1.17 | [tools/comparer.html](tools/comparer.html) |
+| Phylogenetic Checklist Viewer | Arranges a *plant* checklist in phylogenetic order (APG V 2026, PPG I 2016, Yang et al. 2022, BPG 2024; 706 families). Shows present and absent families, each family's share of the checklist and of world diversity, and compares checklists in the same way as the Checklist Comparer. Recognises 706 current and 1,323 former family names of extant plants. | v50 | [tools/viewer.html](tools/viewer.html) |
+| Checklist Cleaner | Applies one table of name corrections (synonyms, misspellings, deletions, or a new rank such as subfamily) to any number of checklists at once, merges the records of a synonym into its accepted name, reports every change and returns corrected copies. Also gives one list of every name in all the files, ready for ChecklistBank, and a report-only mode that changes nothing. | v1.2 | [tools/cleaner.html](tools/cleaner.html) |
 
 The stable links always open the newest version. Earlier versions stay in the `tools` folder,
 so old links keep working.
@@ -29,11 +29,11 @@ Developed with assistance from Claude (Anthropic).
 
 ## How to cite
 
-Rezaye A, Barkworth ME (2026). *Checklist Comparer* (Version v1.16) [Computer software]. https://ali-rezaye.github.io/biodiversity-toolkit/
+Rezaye A, Barkworth ME (2026). *Checklist Comparer* (Version v1.17) [Computer software]. https://ali-rezaye.github.io/biodiversity-toolkit/
 
-Rezaye A, Barkworth ME (2026). *Phylogenetic Checklist Viewer* (Version v49) [Computer software]. https://ali-rezaye.github.io/biodiversity-toolkit/
+Rezaye A, Barkworth ME (2026). *Phylogenetic Checklist Viewer* (Version v50) [Computer software]. https://ali-rezaye.github.io/biodiversity-toolkit/
 
-Rezaye A, Barkworth ME (2026). *Checklist Cleaner* (Version v1.1) [Computer software]. https://ali-rezaye.github.io/biodiversity-toolkit/
+Rezaye A, Barkworth ME (2026). *Checklist Cleaner* (Version v1.2) [Computer software]. https://ali-rezaye.github.io/biodiversity-toolkit/
 
 DOI: to be added on release via Zenodo.
 
@@ -43,7 +43,7 @@ citation in a standard form; GitHub's "Cite this repository" button reads it.
 ## Licence
 
 Copyright © 2026 Somaliland Biodiversity Foundation. The tools (software) are licensed under the
-GNU General Public License v3.0 — see [LICENSE](LICENSE). The website text, images and
+GNU General Public License v3.0 or later (GPL-3.0-or-later) — see [LICENSE](LICENSE). The website text, images and
 documentation, and content such as keys, are licensed under Creative Commons Attribution 4.0
 International (CC BY 4.0) — see [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0). The tools contain no
 third-party code.
@@ -52,7 +52,7 @@ third-party code.
 
 | Path | What it is |
 |---|---|
-| `index.html`, `viewer.html`, `comparer.html`, `cite.html`, `about.html`, `style.css` | The website (plain HTML and CSS, no build step) |
+| `index.html`, `comparer.html`, `viewer.html`, `cleaner.html`, `cite.html`, `about.html`, `style.css` | The website (plain HTML and CSS, no build step) |
 | `tools/` | The tools themselves, every version, plus the stable links `comparer.html`, `viewer.html` and `cleaner.html` |
 | `scripts/update-site.mjs` | Helper that sets the GitHub username, version numbers, file sizes, dates, DOI and the counting and download-log addresses on the website |
 | `CITATION.cff`, `LICENSE`, `LICENSE-CC-BY-4.0`, `README.md` | Citation, the two licences and this file |
