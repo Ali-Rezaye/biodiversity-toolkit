@@ -49,7 +49,7 @@
    is opened from a local folder. Downloads never wait for any of this. */
 (function () {
   var COUNTER = 'https://biodiversity-toolkit.goatcounter.com/count';
-  var LOGGER = 'APPS-SCRIPT-URL';
+  var LOGGER = 'https://script.google.com/macros/s/AKfycbxxiUn3o3EWikM0aevTPvu732-I5PPSbCTLABY1y96mywGU_Xbjg4OdJGldLQTNZg3pUg/exec';
   var web = location.protocol === 'https:' || location.protocol === 'http:';
   var counterOn = web && /^https:\/\/[a-z0-9-]+\.goatcounter\.com\/count$/.test(COUNTER);
   var loggerOn = web && /^https:\/\/script\.google\.com\/\S+\/exec$/.test(LOGGER);
