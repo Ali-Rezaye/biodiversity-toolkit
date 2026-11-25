@@ -46,10 +46,14 @@
 /* Visit counting (GoatCounter), download log and update-notice sign-up. Same script on every page.
    Both addresses are set with scripts/update-site.mjs. While one is still a placeholder, that part
    stays off: nothing is loaded, nothing is sent and no dialog is shown. Nothing runs when the site
-   is opened from a local folder. Downloads never wait for any of this. */
+   is opened from a local folder.
+   The update-notice question is asked once per browser, before the first download. Every way of
+   leaving the box starts the download: Send, No thanks, or closing it. If the box cannot be shown,
+   the download starts at once, so a download never depends on the box. */
 (function () {
   var COUNTER = 'https://biodiversity-toolkit.goatcounter.com/count';
   var LOGGER = 'https://script.google.com/macros/s/AKfycbxxiUn3o3EWikM0aevTPvu732-I5PPSbCTLABY1y96mywGU_Xbjg4OdJGldLQTNZg3pUg/exec';
+  var KEY = 'biodiversity-toolkit-notices';
   var web = location.protocol === 'https:' || location.protocol === 'http:';
   var counterOn = web && /^https:\/\/[a-z0-9-]+\.goatcounter\.com\/count$/.test(COUNTER);
   var loggerOn = web && /^https:\/\/script\.google\.com\/\S+\/exec$/.test(LOGGER);
@@ -71,31 +75,55 @@
     try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: path, title: title, event: true }); } catch (e) {}
   }
 
+  /* Starts the download of a link without the link itself being pressed. The helper link goes
+     inside the box while the box is open, because the rest of the page cannot be used then. */
+  function startDownload(link, box) {
+    var a = document.createElement('a');
+    a.href = link.href;
+    a.setAttribute('download', link.getAttribute('download') || '');
+    a.hidden = true;
+    (box && box.open ? box : document.body).appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   var asked = false;
-  function askForNotices(tool, version) {
-    if (asked || get('biodiversity-toolkit-notices')) return;
+  /* Asks the question. Returns false when it was already answered or the box cannot be shown; the
+     link then downloads as usual. start(box) runs exactly once, however the box is left. */
+  function askForNotices(tool, version, start) {
+    if (asked || get(KEY)) return false;
     var d = document.createElement('dialog');
-    if (typeof d.showModal !== 'function') return;
-    asked = true;
+    if (typeof d.showModal !== 'function') return false;
     d.className = 'notice';
     d.setAttribute('aria-labelledby', 'notice-title');
     d.setAttribute('aria-describedby', 'notice-text');
     d.innerHTML =
       '<form novalidate>' +
       '<h2 id="notice-title">Would you like update notices?</h2>' +
-      '<p id="notice-text">Leave your email and we will write only about new versions, bug fixes and important changes \u2014 nothing else. Your address is kept in a private list held by the authors; write to mary.barkworth@usu.edu to be removed.</p>' +
+      '<p id="notice-text">Leave your email and we will write only about new versions, bug fixes and important changes — nothing else. Your address is kept in a private list held by the authors; write to mary.barkworth@usu.edu to be removed.</p>' +
       '<label for="notice-email">Email address</label>' +
       '<input id="notice-email" type="email" autocomplete="email">' +
       '<p class="notice-note" aria-live="polite"></p>' +
       '<div class="actions"><button type="submit" class="btn btn-open">Send</button>' +
       '<button type="button" class="btn btn-download notice-no">No thanks</button></div>' +
+      '<p style="font-family:var(--sans);font-size:0.95rem;margin:0.9rem 0 0">Your download starts with either button.</p>' +
       '</form>';
     document.body.appendChild(d);
+    try { d.showModal(); } catch (e) { d.remove(); return false; }
+    asked = true;
+    var started = false;
+    function go() {
+      if (started) return;
+      started = true;
+      put(KEY, 'answered');
+      start(d);
+    }
     var form = d.querySelector('form'), input = d.querySelector('input'), note = d.querySelector('.notice-note');
-    d.addEventListener('close', function () { put('biodiversity-toolkit-notices', 'answered'); d.remove(); });
-    d.querySelector('.notice-no').addEventListener('click', function () { d.close(); });
+    d.addEventListener('close', function () { d.remove(); go(); });
+    d.querySelector('.notice-no').addEventListener('click', function () { go(); d.close(); });
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
+      if (started) return;
       var email = input.value.trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
         note.textContent = 'Please check the address: it should look like name@example.org.';
@@ -103,22 +131,31 @@
         return;
       }
       send({ email: email, tool: tool, version: version, page: location.pathname });
-      form.innerHTML = '<p class="notice-thanks" role="status">Thank you</p>';
-      setTimeout(function () { if (d.open) d.close(); }, 2000);
+      go();
+      form.innerHTML = '<p class="notice-thanks" role="status">Thank you. Your download has started.</p>';
+      setTimeout(function () { if (d.open) d.close(); }, 2500);
     });
-    d.showModal();
+    return true;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     var links = document.querySelectorAll('a[data-tool]');
     for (var i = 0; i < links.length; i++) {
-      links[i].addEventListener('click', function () {
-        var tool = this.getAttribute('data-tool'), version = this.getAttribute('data-version');
-        var download = this.hasAttribute('download');
-        if (counterOn) count((download ? 'download-' : 'open-') + tool, (download ? 'Download ' : 'Open ') + tool + ' ' + version);
-        if (!download || !loggerOn) return;
-        send({ tool: tool, version: version, action: 'download', page: location.pathname });
-        askForNotices(tool, version);
+      links[i].addEventListener('click', function (ev) {
+        var link = this, tool = link.getAttribute('data-tool'), version = link.getAttribute('data-version');
+        if (!link.hasAttribute('download')) {
+          if (counterOn) count('open-' + tool, 'Open ' + tool + ' ' + version);
+          return;
+        }
+        function record() {
+          if (counterOn) count('download-' + tool, 'Download ' + tool + ' ' + version);
+          if (loggerOn) send({ tool: tool, version: version, action: 'download', page: location.pathname });
+        }
+        if (loggerOn && askForNotices(tool, version, function (box) { record(); startDownload(link, box); })) {
+          ev.preventDefault();   /* the box starts the download */
+          return;
+        }
+        record();                /* no box: the link downloads as usual */
       });
     }
   });
